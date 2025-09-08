@@ -1,5 +1,15 @@
+[linux]
 192.168.56.112 ansible_user=ansiblefedora
 192.168.56.111 ansible_user=ansibleubuntu
-192.168.56.115 ansible_user=administrator ansible_pass=g%Hr113Lmm ansible_connection=winrm
 
+[windows]
+192.168.56.115
+
+[windows:vars]
+ansible_user=Administrator
+ansible_password=g%Hr113Lmm
+ansible_connection=winrm
+ansible_winrm_transport=basic
+ansible_port=5985
+ansible_winrm_server_cert_validation=ignore
 
