@@ -1,6 +1,6 @@
 [linux]
 192.168.56.112 ansible_user=ansiblefedora
-192.168.56.111 ansible_user=ansibleubuntu
+192.168.56.116 ansible_user=ansibleubuntu
 
 [windows]
 192.168.56.115
