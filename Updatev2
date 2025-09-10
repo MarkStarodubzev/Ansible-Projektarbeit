@@ -1,0 +1,69 @@
+---
+- name: Update Linux servers
+  hosts: linux
+  gather_facts: yes
+  become: yes
+  vars_files:
+    - vault.yml
+  tasks:
+    - name: Update Package cache
+      package:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      package:
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+
+    - name: Reboot if kernel upgraded
+      reboot:
+        reboot_timeout: 200
+        test_command: whoami
+
+    - name: Check for further updates
+      package:
+        update_cache: yes
+        upgrade: yes
+      register: ubuntu_updates
+
+    - name: Collect Linux updates for logging
+      set_fact:
+        updates_log_entry: "{{ updates_log_entry | default({}) | combine({inventory_hostname: {'os': 'Linux', 'updates': ubuntu_updates.upgraded | default([])}}) }}"
+
+- name: Update Windows servers
+  hosts: windows
+  gather_facts: yes
+  tasks:
+    - name: Check for updates
+      win_updates:
+        category_names:
+          - SecurityUpdates
+          - CriticalUpdates
+        state: searched
+      register: windows_pending
+
+    - name: Install updates
+      win_updates:
+        category_names:
+          - SecurityUpdates
+          - CriticalUpdates
+        state: installed
+        reboot: yes
+      register: windows_updates
+
+    - name: Collect Windows updates for logging
+      set_fact:
+        updates_log_entry: "{{ updates_log_entry | default({}) | combine({inventory_hostname: {'os': 'Windows', 'updates': windows_updates.updates | default([])}}) }}"
+
+- name: Write updates log to JSON file on controller with timestamp
+  hosts: localhost
+  gather_facts: no
+  vars:
+    timestamp: "{{ lookup('pipe', 'date +%Y-%m-%d_%H-%M-%S') }}"
+    log_file: "/tmp/all_updates_log_{{ timestamp }}.json"
+  tasks:
+    - name: Save all updates to timestamped JSON
+      copy:
+        dest: "{{ log_file }}"
+        content: "{{ updates_log_entry | to_nice_json }}"
