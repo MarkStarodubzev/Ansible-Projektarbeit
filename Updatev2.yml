@@ -1,7 +1,6 @@
 ---
 - name: Update Linux and Windows systems
   hosts: all
-  become: true
   gather_facts: true
 
   vars:
@@ -9,27 +8,45 @@
     timestamp: "{{ lookup('pipe', 'date +%Y-%m-%d_%H-%M-%S') }}"
 
   tasks:
-    # --- Linux: Ubuntu/Debian ---
+    # --- Linux Tasks (Ubuntu/Debian + Fedora/RHEL) ---
+    - name: Ensure log directory exists
+      delegate_to: localhost
+      ansible.builtin.file:
+        path: "{{ log_dir }}"
+        state: directory
+        mode: '0755'
+
     - name: Update package cache (Ubuntu/Debian)
       ansible.builtin.apt:
         update_cache: yes
+      become: yes
+      become_method: sudo
+      become_password: "{{ ansible_become_passwords[inventory_hostname] }}"
       when: ansible_facts['os_family'] == "Debian"
 
     - name: Upgrade all packages (Ubuntu/Debian)
       ansible.builtin.apt:
         upgrade: dist
       register: debian_upgrade
+      become: yes
+      become_method: sudo
+      become_password: "{{ ansible_become_passwords[inventory_hostname] }}"
       when: ansible_facts['os_family'] == "Debian"
 
-    # --- Linux: Fedora/RHEL (Workaround für kaputtes dnf5 Modul) ---
     - name: Update package cache (Fedora/RHEL)
       ansible.builtin.command: dnf5 -y makecache
       changed_when: false
+      become: yes
+      become_method: sudo
+      become_password: "{{ ansible_become_passwords[inventory_hostname] }}"
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Upgrade all packages (Fedora/RHEL)
       ansible.builtin.command: dnf5 -y upgrade
       register: fedora_upgrade
+      become: yes
+      become_method: sudo
+      become_password: "{{ ansible_become_passwords[inventory_hostname] }}"
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Reboot if kernel upgraded (Fedora/RHEL)
@@ -39,7 +56,7 @@
         - fedora_upgrade is defined
         - '"kernel" in fedora_upgrade.stdout'
 
-    # --- Windows Updates ---
+    # --- Windows Tasks ---
     - name: Install all available Windows updates
       ansible.windows.win_updates:
         category_names: "*"
@@ -48,13 +65,6 @@
       when: ansible_facts['os_family'] == "Windows"
 
     # --- Logging ---
-    - name: Ensure log directory exists
-      delegate_to: localhost
-      ansible.builtin.file:
-        path: "{{ log_dir }}"
-        state: directory
-        mode: '0755'
-
     - name: Build Linux updates log entry
       set_fact:
         updates_log_entry:
@@ -76,7 +86,6 @@
     - name: Save all updates to timestamped JSON
       delegate_to: localhost
       ansible.builtin.copy:
-        dest: "{{ log_dir }}/updates_{{ timestamp }}.json"
-        content: |
-          {{ updates_log_entry | to_nice_json }}
+        dest: "{{ log_dir }}/updates_{{ inventory_hostname }}_{{ timestamp }}.json"
+        content: "{{ updates_log_entry | to_nice_json }}"
       when: updates_log_entry is defined
