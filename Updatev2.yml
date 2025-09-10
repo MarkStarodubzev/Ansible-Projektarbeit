@@ -1,77 +1,66 @@
 ---
-- name: Set ansible_become_pass from Vault
+# Playbook: Updatev2.yml
+# Zweck: Updates für Linux (Ubuntu/Debian + Fedora/RHEL) und Windows
+# Logging in JSON auf dem Controller
+
+- name: Set ansible_become_pass from extra vars
   hosts: localhost
   gather_facts: no
   tasks:
-    - name: Set ansible_become_pass safely
+    - name: Set become password safely
       set_fact:
-        ansible_become_pass: "{{ vault_become_password }}"
+        ansible_become_pass: "{{ vault_become_password | default('') }}"
 
-- name: Update Linux and Windows servers
-  hosts: all
+- name: Update Linux servers
+  hosts: linux
   gather_facts: yes
+  become: yes
   tasks:
-
-    # --- Linux Updates ---
-    - name: Update package cache (Ubuntu/Debian)
+    - name: Update package cache (Debian/Ubuntu)
       apt:
         update_cache: yes
-      become: yes
-      become_pass: "{{ ansible_become_pass }}"
       when: ansible_facts['os_family'] == 'Debian'
 
-    - name: Upgrade all packages (Ubuntu/Debian)
+    - name: Upgrade all packages (Debian/Ubuntu)
       apt:
         upgrade: dist
         autoremove: yes
-      become: yes
-      become_pass: "{{ ansible_become_pass }}"
       when: ansible_facts['os_family'] == 'Debian'
 
     - name: Update package cache (Fedora/RHEL)
       dnf:
         update_cache: yes
-      become: yes
-      become_pass: "{{ ansible_become_pass }}"
       when: ansible_facts['os_family'] == 'RedHat'
 
     - name: Upgrade all packages (Fedora/RHEL)
       dnf:
         name: '*'
         state: latest
-      become: yes
-      become_pass: "{{ ansible_become_pass }}"
       when: ansible_facts['os_family'] == 'RedHat'
 
-    - name: Reboot Linux if kernel upgraded
+    - name: Reboot if kernel upgraded
       reboot:
-        reboot_timeout: 300
+        reboot_timeout: 200
         test_command: whoami
-      become: yes
-      become_pass: "{{ ansible_become_pass }}"
-      when: ansible_facts['os_family'] in ['Debian','RedHat']
 
     - name: Collect Linux updates for logging
-      command: "bash -c 'apt list --upgradable 2>/dev/null || dnf check-update'"
-      register: linux_updates
-      when: ansible_facts['os_family'] in ['Debian','RedHat']
+      set_fact:
+        linux_updates_log: "{{ ansible_facts.packages }}"
+      when: ansible_facts is defined
 
-    - name: Show Linux updates
-      debug:
-        msg: "{{ linux_updates.stdout_lines }}"
-      when: ansible_facts['os_family'] in ['Debian','RedHat']
-
-    # --- Windows Updates ---
-    - name: Check for pending Windows updates
+- name: Update Windows servers
+  hosts: windows
+  gather_facts: yes
+  tasks:
+    - name: Check for security and critical updates
       win_updates:
         category_names:
           - SecurityUpdates
           - CriticalUpdates
         state: searched
       register: windows_pending
-      when: ansible_facts['os_family'] == 'Windows'
 
-    - name: Install pending Windows updates
+    - name: Install security and critical updates
       win_updates:
         category_names:
           - SecurityUpdates
@@ -79,27 +68,26 @@
         state: installed
         reboot: yes
       register: windows_updates
-      when: ansible_facts['os_family'] == 'Windows'
 
-    - name: Show Windows updates
-      debug:
-        msg: "{{ windows_updates }}"
-      when: ansible_facts['os_family'] == 'Windows'
+    - name: Collect Windows updates for logging
+      set_fact:
+        windows_updates_log: "{{ windows_updates.updates }}"
 
-    # --- Logging ---
-    - name: Ensure log directory exists on controller
+- name: Save all updates to timestamped JSON
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Ensure log directory exists
       file:
-        path: "/tmp/ansible_update_logs"
+        path: ./logs
         state: directory
-        mode: '0755'
-      delegate_to: localhost
 
-    - name: Save all updates to timestamped JSON
+    - name: Save updates to JSON file
       copy:
-        dest: "/tmp/ansible_update_logs/updates_{{ ansible_date_time.iso8601_basic }}.json"
         content: |
           {
-            "linux_updates": {{ linux_updates.stdout | to_json }},
-            "windows_updates": {{ windows_updates | to_json }}
+            "timestamp": "{{ lookup('pipe', 'date +%Y-%m-%d_%H-%M-%S') }}",
+            "linux_updates": {{ linux_updates_log | default({}) | to_nice_json }},
+            "windows_updates": {{ windows_updates_log | default([]) | to_nice_json }}
           }
-      delegate_to: localhost
+        dest: "./logs/updates_{{ lookup('pipe', 'date +%Y-%m-%d_%H-%M-%S') }}.json"
