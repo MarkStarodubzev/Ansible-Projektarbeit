@@ -7,6 +7,13 @@
     - vault.yml
   tasks:
 
+    # Initialisiere das Logging
+    - name: Initialize updates_log_entry
+      set_fact:
+        updates_log_entry: {}
+      delegate_to: localhost
+      run_once: true
+
     # Ubuntu/Debian Tasks
     - name: Update package cache (Ubuntu/Debian)
       apt:
@@ -18,33 +25,39 @@
         upgrade: dist
         autoremove: yes
         autoclean: yes
+      register: ubuntu_updates
       when: ansible_facts['os_family'] == "Debian"
 
-    # Fedora/RHEL Tasks mit klassischem DNF
+    # Fedora 42 Tasks über CLI (kein dnf5 Modul)
     - name: Update package cache (Fedora/RHEL)
-      dnf:
-        update_cache: yes
+      command: dnf -y makecache
+      register: fedora_cache
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Upgrade all packages (Fedora/RHEL)
-      dnf:
-        name: "*"
-        state: latest
+      command: dnf -y upgrade
+      register: fedora_updates
       when: ansible_facts['os_family'] == "RedHat"
 
+    - name: Autoremove unnecessary packages (Fedora/RHEL)
+      command: dnf -y autoremove
+      when: ansible_facts['os_family'] == "RedHat"
+
+    # Reboot if kernel updated
     - name: Reboot if kernel upgraded
       reboot:
         reboot_timeout: 200
         test_command: whoami
 
+    # Sammle Updates für Logging
     - name: Collect Linux updates for logging
       set_fact:
         updates_log_entry: >-
           {{
-            updates_log_entry | default({}) | combine({
+            updates_log_entry | combine({
               inventory_hostname: {
                 'os': ansible_facts['os_family'],
-                'updates': (ubuntu_updates.upgraded | default([])) + (fedora_updates.updates | default([]))
+                'updates': (ubuntu_updates.upgraded | default([])) + (fedora_updates.stdout_lines | default([]))
               }
             })
           }}
@@ -76,7 +89,7 @@
 
     - name: Collect Windows updates for logging
       set_fact:
-        updates_log_entry: "{{ updates_log_entry | default({}) | combine({inventory_hostname: {'os': 'Windows', 'updates': windows_updates.updates | default([])}}) }}"
+        updates_log_entry: "{{ updates_log_entry | combine({inventory_hostname: {'os': 'Windows', 'updates': windows_updates.updates | default([])}}) }}"
       delegate_to: localhost
       run_once: true
 
