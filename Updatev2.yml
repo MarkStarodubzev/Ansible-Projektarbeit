@@ -1,9 +1,11 @@
 ---
-- name: Update Linux and Windows systems
+- name: Update Linux and Windows systems with logging
   hosts: all
   gather_facts: yes
   vars:
     windows_reboot: yes
+    linux_log_file: /var/log/ansible_updates.log
+    windows_log_file: C:\Ansible\update_log.txt
 
   tasks:
     # --------------------------
@@ -17,10 +19,13 @@
       become: yes
       register: apt_result
 
-    - name: Show APT update result
-      debug:
-        var: apt_result
+    - name: Log APT update result
+      ansible.builtin.lineinfile:
+        path: "{{ linux_log_file }}"
+        create: yes
+        line: "{{ ansible_date_time.iso8601 }} [APT] {{ apt_result.stdout if apt_result.stdout else apt_result.msg }}"
       when: ansible_os_family == "Debian"
+      become: yes
 
     # --------------------------
     # RHEL/CentOS (yum)
@@ -33,10 +38,13 @@
       become: yes
       register: yum_result
 
-    - name: Show YUM update result
-      debug:
-        var: yum_result
+    - name: Log YUM update result
+      ansible.builtin.lineinfile:
+        path: "{{ linux_log_file }}"
+        create: yes
+        line: "{{ ansible_date_time.iso8601 }} [YUM] {{ yum_result.stdout if yum_result.stdout else yum_result.msg }}"
       when: ansible_distribution in ["RedHat", "CentOS", "Rocky", "AlmaLinux"] and ansible_distribution_major_version | int < 9
+      become: yes
 
     # --------------------------
     # Fedora 42+ (dnf via shell)
@@ -47,10 +55,13 @@
       become: yes
       register: dnf_shell_result
 
-    - name: Show DNF shell result
-      debug:
-        var: dnf_shell_result
+    - name: Log DNF shell result
+      ansible.builtin.lineinfile:
+        path: "{{ linux_log_file }}"
+        create: yes
+        line: "{{ ansible_date_time.iso8601 }} [DNF] {{ dnf_shell_result.stdout if dnf_shell_result.stdout else dnf_shell_result.stderr }}"
       when: ansible_distribution == "Fedora" and ansible_distribution_major_version | int >= 42
+      become: yes
 
     # --------------------------
     # openSUSE/SLE
@@ -63,10 +74,13 @@
       become: yes
       register: zypper_result
 
-    - name: Show Zypper update result
-      debug:
-        var: zypper_result
+    - name: Log Zypper update result
+      ansible.builtin.lineinfile:
+        path: "{{ linux_log_file }}"
+        create: yes
+        line: "{{ ansible_date_time.iso8601 }} [Zypper] {{ zypper_result.stdout if zypper_result.stdout else zypper_result.msg }}"
       when: ansible_os_family == "Suse"
+      become: yes
 
     # --------------------------
     # Windows
@@ -80,7 +94,9 @@
       when: ansible_os_family == "Windows"
       register: win_result
 
-    - name: Show Windows update result
-      debug:
-        var: win_result
+    - name: Log Windows update result
+      win_shell: |
+        $logfile = "{{ windows_log_file }}"
+        if (!(Test-Path $logfile)) { New-Item -ItemType File -Path $logfile -Force }
+        Add-Content -Path $logfile -Value "$(Get-Date -Format o) [WINUPDATES] {{ win_result.reboot_required }} Updates applied"
       when: ansible_os_family == "Windows"
