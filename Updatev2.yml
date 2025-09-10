@@ -1,14 +1,14 @@
 ---
-- name: Initialize updates log
-  hosts: all
+# 1️⃣ Initialisierung der Logging-Variable auf dem Controller
+- name: Initialize updates_log_entry on controller
+  hosts: localhost
   gather_facts: no
-  pre_tasks:
-    - name: Initialize updates_log_entry on controller
+  tasks:
+    - name: Ensure updates_log_entry exists
       set_fact:
         updates_log_entry: {}
-      delegate_to: localhost
-      run_once: true
 
+# 2️⃣ Linux-Hosts aktualisieren
 - name: Update Linux servers
   hosts: linux
   gather_facts: yes
@@ -31,7 +31,7 @@
       register: ubuntu_updates
       when: ansible_facts['os_family'] == "Debian"
 
-    # Fedora 42 Tasks via CLI (kein dnf5 Modul)
+    # Fedora Tasks via CLI (kein dnf5 Modul)
     - name: Update package cache (Fedora/RHEL)
       command: dnf -y makecache
       register: fedora_cache
@@ -68,6 +68,7 @@
       run_once: true
       when: ansible_facts['os_family'] in ["Debian", "RedHat"]
 
+# 3️⃣ Windows-Hosts aktualisieren
 - name: Update Windows servers
   hosts: windows
   gather_facts: yes
@@ -97,6 +98,7 @@
       delegate_to: localhost
       run_once: true
 
+# 4️⃣ JSON-Log auf Controller speichern
 - name: Write updates log to JSON file on controller with timestamp
   hosts: localhost
   gather_facts: no
