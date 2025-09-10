@@ -1,75 +1,86 @@
 ---
-- name: Update Linux servers
-  hosts: linux
+- name: Update Linux and Windows systems
+  hosts: all
   gather_facts: yes
-  become: yes
-  vars_files:
-    - vault.yml
+  vars:
+    windows_reboot: yes
+
   tasks:
-
-    - name: Update Package cache (Ubuntu/Debian)
+    # --------------------------
+    # Debian/Ubuntu
+    # --------------------------
+    - name: Update APT-based Linux systems
       apt:
         update_cache: yes
-      when: ansible_facts['os_family'] == "Debian"
-
-    - name: Upgrade all packages (Ubuntu/Debian)
-      apt:
         upgrade: dist
-        autoremove: yes
-        autoclean: yes
-      when: ansible_facts['os_family'] == "Debian"
+      when: ansible_os_family == "Debian"
+      become: yes
+      register: apt_result
 
-    - name: Update Package cache (Fedora/RHEL)
-      dnf:
-        update_cache: yes
-      when: ansible_facts['os_family'] == "RedHat"
+    - name: Show APT update result
+      debug:
+        var: apt_result
+      when: ansible_os_family == "Debian"
 
-    - name: Upgrade all packages (Fedora/RHEL)
-      dnf:
+    # --------------------------
+    # RHEL/CentOS (yum)
+    # --------------------------
+    - name: Update RHEL/CentOS systems with yum
+      yum:
         name: "*"
         state: latest
-        autoremove: yes
-      when: ansible_facts['os_family'] == "RedHat"
+      when: ansible_distribution in ["RedHat", "CentOS", "Rocky", "AlmaLinux"] and ansible_distribution_major_version | int < 9
+      become: yes
+      register: yum_result
 
-    - name: Reboot if kernel upgraded
-      reboot:
-        reboot_timeout: 200
-        test_command: whoami
-
-    - name: Check for further updates (Ubuntu/Debian)
-      apt:
-        update_cache: yes
-        upgrade: yes
-      register: ubuntu_updates
-      when: ansible_facts['os_family'] == "Debian"
-
-    - name: Show available updates (Ubuntu/Debian)
+    - name: Show YUM update result
       debug:
-        msg: "{{ ubuntu_updates }}"
-      when: ansible_facts['os_family'] == "Debian"
+        var: yum_result
+      when: ansible_distribution in ["RedHat", "CentOS", "Rocky", "AlmaLinux"] and ansible_distribution_major_version | int < 9
 
-- name: Update Windows servers
-  hosts: windows
-  gather_facts: yes
-  tasks:
+    # --------------------------
+    # Fedora 42+ (dnf via shell)
+    # --------------------------
+    - name: Update Fedora 42+ systems using shell
+      ansible.builtin.shell: dnf -y upgrade
+      when: ansible_distribution == "Fedora" and ansible_distribution_major_version | int >= 42
+      become: yes
+      register: dnf_shell_result
 
-    - name: Check for updates
+    - name: Show DNF shell result
+      debug:
+        var: dnf_shell_result
+      when: ansible_distribution == "Fedora" and ansible_distribution_major_version | int >= 42
+
+    # --------------------------
+    # openSUSE/SLE
+    # --------------------------
+    - name: Update Zypper-based Linux systems
+      zypper:
+        name: "*"
+        state: latest
+      when: ansible_os_family == "Suse"
+      become: yes
+      register: zypper_result
+
+    - name: Show Zypper update result
+      debug:
+        var: zypper_result
+      when: ansible_os_family == "Suse"
+
+    # --------------------------
+    # Windows
+    # --------------------------
+    - name: Install Windows updates
       win_updates:
         category_names:
           - SecurityUpdates
           - CriticalUpdates
-        state: searched
-      register: windows_pending
+        reboot: "{{ windows_reboot }}"
+      when: ansible_os_family == "Windows"
+      register: win_result
 
-    - name: Install updates
-      win_updates:
-        category_names:
-          - SecurityUpdates
-          - CriticalUpdates
-        state: installed
-        reboot: yes
-      register: windows_updates
-
-    - name: Show installed updates
+    - name: Show Windows update result
       debug:
-        msg: "{{ windows_updates }}"
+        var: win_result
+      when: ansible_os_family == "Windows"
