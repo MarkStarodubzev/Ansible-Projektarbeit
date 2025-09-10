@@ -1,7 +1,6 @@
 ---
-# Playbook: Updatev2.yml
-# Zweck: Updates für Linux (Ubuntu/Debian + Fedora/RHEL) und Windows
-# Logging in JSON auf dem Controller
+# Playbook: Updatev3.yml
+# Funktioniert mit Semaphore + Vault/extra-vars
 
 - name: Set ansible_become_pass from extra vars
   hosts: localhost
@@ -9,50 +8,72 @@
   tasks:
     - name: Set become password safely
       set_fact:
-        ansible_become_pass: "{{ vault_become_password | default('') }}"
+        ansible_become_pass: "{{ vault_become_password | default(ansible_become_pass) }}"
 
 - name: Update Linux servers
   hosts: linux
   gather_facts: yes
   become: yes
   tasks:
-    - name: Update package cache (Debian/Ubuntu)
-      apt:
-        update_cache: yes
-      when: ansible_facts['os_family'] == 'Debian'
+    - name: Ensure log directory exists on controller
+      file:
+        path: "/tmp/update_logs"
+        state: directory
+      delegate_to: localhost
 
-    - name: Upgrade all packages (Debian/Ubuntu)
-      apt:
+    - name: Update package cache (Ubuntu/Debian)
+      ansible.builtin.apt:
+        update_cache: yes
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Upgrade all packages (Ubuntu/Debian)
+      ansible.builtin.apt:
         upgrade: dist
-        autoremove: yes
-      when: ansible_facts['os_family'] == 'Debian'
+      when: ansible_facts['os_family'] == "Debian"
 
     - name: Update package cache (Fedora/RHEL)
-      dnf:
+      ansible.builtin.dnf:
         update_cache: yes
-      when: ansible_facts['os_family'] == 'RedHat'
+      when: ansible_facts['os_family'] == "RedHat"
 
     - name: Upgrade all packages (Fedora/RHEL)
-      dnf:
-        name: '*'
+      ansible.builtin.dnf:
+        name: "*"
         state: latest
-      when: ansible_facts['os_family'] == 'RedHat'
+      when: ansible_facts['os_family'] == "RedHat"
 
     - name: Reboot if kernel upgraded
-      reboot:
-        reboot_timeout: 200
+      ansible.builtin.reboot:
+        reboot_timeout: 300
         test_command: whoami
 
     - name: Collect Linux updates for logging
-      set_fact:
-        linux_updates_log: "{{ ansible_facts.packages }}"
-      when: ansible_facts is defined
+      ansible.builtin.shell: |
+        if [ "{{ ansible_facts['os_family'] }}" == "Debian" ]; then
+          apt list --upgradable
+        else
+          dnf check-update
+        fi
+      register: linux_updates
+      changed_when: false
+
+    - name: Save Linux updates log
+      copy:
+        content: "{{ linux_updates.stdout }}"
+        dest: "/tmp/update_logs/linux_updates_{{ inventory_hostname }}_{{ ansible_date_time.iso8601 }}.log"
+      delegate_to: localhost
 
 - name: Update Windows servers
   hosts: windows
   gather_facts: yes
   tasks:
-    - name: Check for security and critical updates
+    - name: Ensure log directory exists on controller
+      file:
+        path: "/tmp/update_logs"
+        state: directory
+      delegate_to: localhost
+
+    - name: Check for updates
       win_updates:
         category_names:
           - SecurityUpdates
@@ -60,7 +81,7 @@
         state: searched
       register: windows_pending
 
-    - name: Install security and critical updates
+    - name: Install updates
       win_updates:
         category_names:
           - SecurityUpdates
@@ -69,25 +90,8 @@
         reboot: yes
       register: windows_updates
 
-    - name: Collect Windows updates for logging
-      set_fact:
-        windows_updates_log: "{{ windows_updates.updates }}"
-
-- name: Save all updates to timestamped JSON
-  hosts: localhost
-  gather_facts: no
-  tasks:
-    - name: Ensure log directory exists
-      file:
-        path: ./logs
-        state: directory
-
-    - name: Save updates to JSON file
+    - name: Save Windows updates log
       copy:
-        content: |
-          {
-            "timestamp": "{{ lookup('pipe', 'date +%Y-%m-%d_%H-%M-%S') }}",
-            "linux_updates": {{ linux_updates_log | default({}) | to_nice_json }},
-            "windows_updates": {{ windows_updates_log | default([]) | to_nice_json }}
-          }
-        dest: "./logs/updates_{{ lookup('pipe', 'date +%Y-%m-%d_%H-%M-%S') }}.json"
+        content: "{{ windows_updates }}"
+        dest: "/tmp/update_logs/windows_updates_{{ inventory_hostname }}_{{ ansible_date_time.iso8601 }}.log"
+      delegate_to: localhost
