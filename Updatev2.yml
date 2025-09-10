@@ -1,5 +1,5 @@
 ---
-# Semaphore-kompatibles Playbook für Updates und Logging
+# Semaphore-kompatibles Multi-OS Update-Playbook
 
 - name: Set ansible_become_pass from Vault
   hosts: localhost
@@ -11,12 +11,13 @@
       set_fact:
         ansible_become_pass: "{{ vault_become_password | default('') }}"
 
-- name: Update Linux servers
-  hosts: linux
+- name: Update Linux and Windows servers
+  hosts: all
   gather_facts: yes
   become: yes
   tasks:
 
+    # --- Linux Updates ---
     - name: Update package cache (Ubuntu/Debian)
       apt:
         update_cache: yes
@@ -41,19 +42,18 @@
         autoremove: yes
       when: ansible_facts['os_family'] == 'RedHat'
 
-    - name: Reboot if kernel upgraded
+    - name: Reboot Linux if kernel upgraded
       reboot:
         reboot_timeout: 300
         test_command: whoami
+      when: ansible_facts['os_family'] in ['Debian','RedHat']
 
     - name: Collect Linux updates for logging
       set_fact:
         linux_updates: "{{ ansible_facts.packages | default({}) }}"
+      when: ansible_facts['os_family'] in ['Debian','RedHat']
 
-- name: Update Windows servers
-  hosts: windows
-  gather_facts: yes
-  tasks:
+    # --- Windows Updates ---
     - name: Check for pending Windows updates
       win_updates:
         category_names:
@@ -61,6 +61,7 @@
           - CriticalUpdates
         state: searched
       register: windows_pending
+      when: ansible_facts['os_family'] == 'Windows'
 
     - name: Install pending Windows updates
       win_updates:
@@ -70,6 +71,7 @@
         state: installed
         reboot: yes
       register: windows_updates
+      when: ansible_facts['os_family'] == 'Windows'
 
 - name: Save all updates to timestamped JSON on controller
   hosts: localhost
@@ -86,8 +88,8 @@
     - name: Collect updates from all hosts
       set_fact:
         updates_log_entry:
-          linux: "{{ hostvars | dict2items | selectattr('value.linux_updates', 'defined') | map(attribute='value.linux_updates') | list }}"
-          windows: "{{ hostvars | dict2items | selectattr('value.windows_updates', 'defined') | map(attribute='value.windows_updates') | list }}"
+          linux: "{{ hostvars | dict2items | selectattr('value.linux_updates','defined') | map(attribute='value.linux_updates') | list }}"
+          windows: "{{ hostvars | dict2items | selectattr('value.windows_updates','defined') | map(attribute='value.windows_updates') | list }}"
 
     - name: Write updates to JSON file
       copy:
