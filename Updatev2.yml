@@ -7,7 +7,8 @@
     - vault.yml
   tasks:
 
-    - name: Update Package cache (Ubuntu/Debian)
+    # Ubuntu/Debian Tasks
+    - name: Update package cache (Ubuntu/Debian)
       apt:
         update_cache: yes
       when: ansible_facts['os_family'] == "Debian"
@@ -19,15 +20,17 @@
         autoclean: yes
       when: ansible_facts['os_family'] == "Debian"
 
-    - name: Update Package cache (Fedora/RHEL)
-      ansible.legacy.dnf5:
+    # Fedora/RHEL Tasks mit klassischem DNF
+    - name: Update package cache (Fedora/RHEL)
+      dnf:
         update_cache: yes
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Upgrade all packages (Fedora/RHEL)
-      ansible.legacy.dnf5:
+      dnf:
         name: "*"
         state: latest
+        autoremove: yes
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Reboot if kernel upgraded
@@ -42,7 +45,7 @@
             updates_log_entry | default({}) | combine({
               inventory_hostname: {
                 'os': ansible_facts['os_family'],
-                'updates': (ubuntu_updates.upgraded | default([])) + (fedora_updates.updates | default([]))
+                'updates': (ubuntu_updates.upgraded | default([])) + (fedora_updates.changes | default([]))
               }
             })
           }}
