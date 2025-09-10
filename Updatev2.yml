@@ -7,7 +7,7 @@
 
   tasks:
     # --------------------------
-    # LINUX-UPDATES
+    # Debian/Ubuntu
     # --------------------------
     - name: Update APT-based Linux systems
       apt:
@@ -22,19 +22,41 @@
         var: apt_result
       when: ansible_os_family == "Debian"
 
-    - name: Update YUM-based Linux systems
+    # --------------------------
+    # RHEL/CentOS (yum)
+    # --------------------------
+    - name: Update RHEL/CentOS systems with yum
       yum:
         name: "*"
         state: latest
-      when: ansible_os_family == "RedHat"
+      when: ansible_distribution in ["RedHat", "CentOS", "Rocky", "AlmaLinux"] and ansible_distribution_major_version | int < 9
       become: yes
       register: yum_result
 
     - name: Show YUM update result
       debug:
         var: yum_result
-      when: ansible_os_family == "RedHat"
+      when: ansible_distribution in ["RedHat", "CentOS", "Rocky", "AlmaLinux"] and ansible_distribution_major_version | int < 9
 
+    # --------------------------
+    # Fedora 42+ (dnf5)
+    # --------------------------
+    - name: Update Fedora 42+ systems using dnf5
+      community.general.dnf5:
+        name: "*"
+        state: latest
+      when: ansible_distribution == "Fedora" and ansible_distribution_major_version | int >= 42
+      become: yes
+      register: dnf5_result
+
+    - name: Show DNF5 update result
+      debug:
+        var: dnf5_result
+      when: ansible_distribution == "Fedora" and ansible_distribution_major_version | int >= 42
+
+    # --------------------------
+    # openSUSE/SLE
+    # --------------------------
     - name: Update Zypper-based Linux systems
       zypper:
         name: "*"
@@ -49,7 +71,7 @@
       when: ansible_os_family == "Suse"
 
     # --------------------------
-    # WINDOWS-UPDATES
+    # Windows
     # --------------------------
     - name: Install Windows updates
       win_updates:
