@@ -94,6 +94,7 @@
         path: "{{ central_csv_file }}"
         state: touch
       delegate_to: localhost
+      become: yes
       run_once: true
 
     - name: Add CSV header if file is empty
