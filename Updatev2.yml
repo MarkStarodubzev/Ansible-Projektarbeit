@@ -1,16 +1,13 @@
 ---
-- name: Init updates log
-  hosts: localhost
-  gather_facts: no
-  tasks:
-    - name: Initialize updates_log_entry
-      set_fact:
-        updates_log_entry: {}
-
-- name: Update Linux servers
+- name: Update Linux servers (Ubuntu & Fedora)
   hosts: linux
   gather_facts: yes
   become: yes
+  vars_files:
+    - vault.yml
+  vars:
+    # sorgt dafür, dass sudo schon beim gather_facts funktioniert
+    ansible_become_password: "{{ become_passwords[inventory_hostname] }}"
   tasks:
     - name: Update package cache (Ubuntu/Debian)
       apt:
@@ -21,8 +18,8 @@
       apt:
         upgrade: dist
         autoremove: yes
+        autoclean: yes
       when: ansible_facts['os_family'] == "Debian"
-      register: ubuntu_updates
 
     - name: Update package cache (Fedora/RHEL)
       dnf5:
@@ -34,27 +31,20 @@
         name: "*"
         state: latest
       when: ansible_facts['os_family'] == "RedHat"
-      register: fedora_updates
 
     - name: Reboot if kernel upgraded
       reboot:
         reboot_timeout: 200
         test_command: whoami
 
-    # Logging für Linux
     - name: Collect Linux updates for logging
       set_fact:
-        updates_log_entry: >-
-          {{
-            (updates_log_entry | default({})) | combine({
-              inventory_hostname: {
-                'os': ansible_facts['os_family'],
-                'updates': (ubuntu_updates.stdout_lines | default([])) +
-                           (fedora_updates.results | default([]))
-              }
-            })
-          }}
+        updates_log_entry:
+          host: "{{ inventory_hostname }}"
+          os: "{{ ansible_facts['distribution'] }}"
+          updates: "{{ ansible_facts['pkg_mgr'] }}"
       delegate_to: localhost
+      run_once: false
 
 - name: Update Windows servers
   hosts: windows
@@ -77,25 +67,20 @@
         reboot: yes
       register: windows_updates
 
-    # Logging für Windows
     - name: Collect Windows updates for logging
       set_fact:
-        updates_log_entry: >-
-          {{
-            (updates_log_entry | default({})) | combine({
-              inventory_hostname: {
-                'os': 'Windows',
-                'updates': windows_updates.updates | default([])
-              }
-            })
-          }}
+        updates_log_entry:
+          host: "{{ inventory_hostname }}"
+          os: "Windows"
+          updates: "{{ windows_updates }}"
       delegate_to: localhost
+      run_once: false
 
-- name: Write updates log to JSON file on controller with timestamp
+- name: Write updates log to JSON file on controller
   hosts: localhost
   gather_facts: no
   tasks:
     - name: Save all updates to timestamped JSON
       copy:
-        dest: "/tmp/updates_log_{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}.json"
-        content: "{{ updates_log_entry | to_nice_json }}"
+        dest: "updates_log_{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}.json"
+        content: "{{ hostvars | json_query('*[].updates_log_entry') | to_nice_json }}"
