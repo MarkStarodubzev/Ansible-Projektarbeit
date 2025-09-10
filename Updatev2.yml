@@ -1,198 +1,408 @@
 ---
-- name: Update all servers
-  hosts: all
-  gather_facts: yes
-  # Remove global become - handle per platform
+# Multi-Platform Update Playbook for Linux and Windows
+# Works with Semaphore/Ansible Tower
+- name: Create log directory
+  hosts: localhost
+  gather_facts: no
   vars:
     log_dir: "/tmp/update_logs"
   tasks:
-    - name: Ensure log directory exists on controller
+    - name: Ensure log directory exists
       file:
         path: "{{ log_dir }}"
         state: directory
-      delegate_to: localhost
       run_once: true
 
-# --- Linux Updates ---
+# ============================================================================
+# LINUX UPDATES
+# ============================================================================
 - name: Update Linux servers
   hosts: linux
   gather_facts: yes
   become: yes
+  vars:
+    log_dir: "/tmp/update_logs"
   tasks:
+    # Ubuntu/Debian Updates
     - name: Update package cache (Ubuntu/Debian)
-      ansible.builtin.apt:
+      apt:
         update_cache: yes
         cache_valid_time: 3600
-      when: ansible_facts['os_family'] == "Debian"
+      when: ansible_os_family == "Debian"
 
     - name: Upgrade all packages (Ubuntu/Debian)
-      ansible.builtin.apt:
+      apt:
         upgrade: dist
         autoremove: yes
         autoclean: yes
-      when: ansible_facts['os_family'] == "Debian"
-      register: debian_upgrade
+      register: debian_updates
+      when: ansible_os_family == "Debian"
 
-    - name: Update package cache (Fedora/RHEL/CentOS)
-      ansible.builtin.dnf:
-        update_cache: yes
-      when: ansible_facts['os_family'] == "RedHat"
-
-    - name: Upgrade all packages (Fedora/RHEL/CentOS)
-      ansible.builtin.dnf:
+    # RHEL/CentOS/Fedora Updates
+    - name: Update all packages (RHEL/CentOS/Fedora)
+      yum:
         name: "*"
         state: latest
-      when: ansible_facts['os_family'] == "RedHat"
-      register: redhat_upgrade
+      register: rhel_updates
+      when: ansible_os_family == "RedHat"
 
-    - name: Check if reboot required (Ubuntu/Debian)
+    # SUSE Updates
+    - name: Update all packages (SUSE)
+      zypper:
+        name: "*"
+        state: latest
+      register: suse_updates
+      when: ansible_os_family == "Suse"
+
+    # Arch Linux Updates
+    - name: Update all packages (Arch)
+      pacman:
+        update_cache: yes
+        upgrade: yes
+      register: arch_updates
+      when: ansible_os_family == "Archlinux"
+
+    # Alpine Linux Updates
+    - name: Update all packages (Alpine)
+      apk:
+        update_cache: yes
+        upgrade: yes
+      register: alpine_updates
+      when: ansible_os_family == "Alpine"
+
+    # Check if reboot is required
+    - name: Check if reboot required (Debian-based)
       stat:
         path: /var/run/reboot-required
-      register: reboot_required_file
-      when: ansible_facts['os_family'] == "Debian"
+      register: reboot_required_debian
+      when: ansible_os_family == "Debian"
 
-    - name: Reboot if required (Ubuntu/Debian)
-      ansible.builtin.reboot:
-        reboot_timeout: 600
-        test_command: whoami
-      when: 
-        - ansible_facts['os_family'] == "Debian"
-        - reboot_required_file.stat.exists
-
-    - name: Reboot if kernel updated (RHEL/CentOS/Fedora)
-      ansible.builtin.reboot:
-        reboot_timeout: 600
-        test_command: whoami
-      when:
-        - ansible_facts['os_family'] == "RedHat"
-        - redhat_upgrade is defined
-        - redhat_upgrade.changed
-
-    - name: Collect Linux update information
-      ansible.builtin.shell: |
-        if [ "{{ ansible_facts['os_family'] }}" == "Debian" ]; then
-          echo "=== Recently upgraded packages ===" 
-          grep " upgrade " /var/log/apt/history.log | tail -20 || echo "No recent upgrades found"
-          echo "=== Current upgradable packages ==="
-          apt list --upgradable 2>/dev/null || echo "No upgradable packages"
-        else
-          echo "=== Recently updated packages ==="
-          dnf history list --reverse | head -10 || echo "No recent updates found"
-          echo "=== Available updates ==="
-          dnf check-update 2>/dev/null || echo "All packages up to date"
-        fi
-      register: linux_updates
-      changed_when: false
+    - name: Check if reboot required (RHEL-based)
+      shell: needs-restarting -r
+      register: reboot_required_rhel
       failed_when: false
+      changed_when: false
+      when: ansible_os_family == "RedHat"
 
-    - name: Save Linux updates log
+    - name: Set reboot required fact
+      set_fact:
+        reboot_needed: >-
+          {{
+            (ansible_os_family == "Debian" and reboot_required_debian.stat.exists) or
+            (ansible_os_family == "RedHat" and reboot_required_rhel.rc == 1) or
+            (debian_updates is defined and debian_updates.changed) or
+            (rhel_updates is defined and rhel_updates.changed) or
+            (suse_updates is defined and suse_updates.changed) or
+            (arch_updates is defined and arch_updates.changed) or
+            (alpine_updates is defined and alpine_updates.changed)
+          }}
+
+    # Reboot if needed
+    - name: Reboot server if required
+      reboot:
+        reboot_timeout: 600
+        test_command: whoami
+      when: reboot_needed | bool
+
+    # Gather update information for logging
+    - name: Gather update information
+      shell: |
+        echo "=== System Information ==="
+        echo "Hostname: $(hostname)"
+        echo "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+        echo "Kernel: $(uname -r)"
+        echo "Architecture: {{ ansible_architecture }}"
+        echo "Update Date: $(date)"
+        echo ""
+        
+        echo "=== Update Summary ==="
+        if [ "{{ ansible_os_family }}" == "Debian" ]; then
+          echo "Package Manager: APT"
+          apt list --installed | wc -l | awk '{print "Total packages: " $1}'
+          if [ -f /var/log/apt/history.log ]; then
+            echo "Recent updates:"
+            grep " upgrade " /var/log/apt/history.log | tail -5 | sed 's/^/  /'
+          fi
+        elif [ "{{ ansible_os_family }}" == "RedHat" ]; then
+          echo "Package Manager: YUM/DNF"
+          rpm -qa | wc -l | awk '{print "Total packages: " $1}'
+          echo "Recent updates:"
+          rpm -qa --last | head -10 | sed 's/^/  /'
+        elif [ "{{ ansible_os_family }}" == "Suse" ]; then
+          echo "Package Manager: Zypper"
+          rpm -qa | wc -l | awk '{print "Total packages: " $1}'
+        elif [ "{{ ansible_os_family }}" == "Archlinux" ]; then
+          echo "Package Manager: Pacman"
+          pacman -Q | wc -l | awk '{print "Total packages: " $1}'
+        elif [ "{{ ansible_os_family }}" == "Alpine" ]; then
+          echo "Package Manager: APK"
+          apk list --installed | wc -l | awk '{print "Total packages: " $1}'
+        fi
+        
+        echo ""
+        echo "=== System Status ==="
+        echo "Uptime: $(uptime)"
+        echo "Load Average: $(cat /proc/loadavg)"
+        echo "Memory Usage: $(free -h | grep Mem)"
+        echo "Disk Usage: $(df -h / | tail -1)"
+        echo "Reboot Required: {{ reboot_needed | default(false) }}"
+      register: linux_update_info
+      changed_when: false
+
+    # Save log file
+    - name: Save Linux update log
       copy:
-        content: |
-          Linux Update Log for {{ inventory_hostname }}
-          Generated: {{ ansible_date_time.iso8601 }}
-          OS Family: {{ ansible_facts['os_family'] }}
-          OS Version: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}
-          
-          {{ linux_updates.stdout }}
-        dest: "{{ log_dir }}/linux_updates_{{ inventory_hostname }}_{{ ansible_date_time.iso8601 }}.log"
+        content: "{{ linux_update_info.stdout }}"
+        dest: "{{ log_dir }}/linux_updates_{{ inventory_hostname }}_{{ ansible_date_time.iso8601_basic_short }}.log"
       delegate_to: localhost
 
-# --- Windows Updates ---
+# ============================================================================
+# WINDOWS UPDATES  
+# ============================================================================
 - name: Update Windows servers
   hosts: windows
   gather_facts: yes
-  # No become needed for Windows
+  vars:
+    log_dir: "/tmp/update_logs"
   tasks:
-    - name: Check for Windows updates using PowerShell
+    # Search for available updates
+    - name: Search for Windows updates
       win_shell: |
         $UpdateSession = New-Object -ComObject Microsoft.Update.Session
         $UpdateSearcher = $UpdateSession.CreateUpdateSearcher()
+        
+        Write-Host "Searching for updates..."
         $SearchResult = $UpdateSearcher.Search("IsInstalled=0 and Type='Software' and IsHidden=0")
-        Write-Host "Found $($SearchResult.Updates.Count) updates"
+        
+        $UpdateCount = $SearchResult.Updates.Count
+        Write-Host "Found $UpdateCount available updates"
+        
+        $SecurityUpdates = 0
+        $CriticalUpdates = 0
+        $OtherUpdates = 0
+        $UpdateList = @()
+        
         foreach ($Update in $SearchResult.Updates) {
-            Write-Host "- $($Update.Title)"
+            $UpdateInfo = @{
+                Title = $Update.Title
+                Description = $Update.Description
+                SizeInMB = [math]::Round($Update.MaxDownloadSize / 1MB, 2)
+                Categories = ($Update.Categories | ForEach-Object { $_.Name }) -join ", "
+            }
+            $UpdateList += $UpdateInfo
+            
+            if ($Update.Title -match "Security|Defender") { $SecurityUpdates++ }
+            elseif ($Update.Categories | Where-Object { $_.Name -match "Critical" }) { $CriticalUpdates++ }
+            else { $OtherUpdates++ }
         }
-        $SearchResult.Updates.Count
-      register: windows_pending
+        
+        $Results = @{
+            TotalUpdates = $UpdateCount
+            SecurityUpdates = $SecurityUpdates
+            CriticalUpdates = $CriticalUpdates
+            OtherUpdates = $OtherUpdates
+            UpdateDetails = $UpdateList
+        }
+        
+        $Results | ConvertTo-Json -Depth 3
+      register: windows_search
       changed_when: false
 
-    - name: Display pending updates
+    - name: Display update search results
       debug:
-        msg: "Found {{ windows_pending.stdout_lines[-1] | default(0) }} pending updates"
+        var: windows_search.stdout
 
-    - name: Install Windows updates using PowerShell
+    # Install critical and security updates
+    - name: Install Windows updates
       win_shell: |
         $UpdateSession = New-Object -ComObject Microsoft.Update.Session
         $UpdateSearcher = $UpdateSession.CreateUpdateSearcher()
         $SearchResult = $UpdateSearcher.Search("IsInstalled=0 and Type='Software' and IsHidden=0")
         
         if ($SearchResult.Updates.Count -eq 0) {
-            Write-Host "No updates available"
+            Write-Host "No updates available for installation"
+            $Results = @{ 
+                UpdatesInstalled = 0
+                RebootRequired = $false
+                Status = "No updates available"
+            }
+            $Results | ConvertTo-Json
             exit 0
         }
         
+        # Create collection of updates to install (prioritize security and critical)
         $UpdateCollection = New-Object -ComObject Microsoft.Update.UpdateColl
+        $InstallList = @()
+        
         foreach ($Update in $SearchResult.Updates) {
-            if ($Update.Title -match "Security|Critical") {
+            # Install all security updates and critical updates
+            if ($Update.Title -match "Security|Defender" -or 
+                ($Update.Categories | Where-Object { $_.Name -match "Critical|Security" })) {
                 $UpdateCollection.Add($Update) | Out-Null
-                Write-Host "Adding: $($Update.Title)"
+                $InstallList += $Update.Title
+                Write-Host "Queued for installation: $($Update.Title)"
             }
         }
         
         if ($UpdateCollection.Count -eq 0) {
             Write-Host "No critical or security updates found"
+            $Results = @{ 
+                UpdatesInstalled = 0
+                RebootRequired = $false
+                Status = "No critical/security updates"
+            }
+            $Results | ConvertTo-Json
             exit 0
         }
         
+        Write-Host "Installing $($UpdateCollection.Count) updates..."
+        
+        # Download updates
         $Downloader = $UpdateSession.CreateUpdateDownloader()
         $Downloader.Updates = $UpdateCollection
         $DownloadResult = $Downloader.Download()
         
-        $Installer = $UpdateSession.CreateUpdateInstaller()
-        $Installer.Updates = $UpdateCollection
-        $InstallResult = $Installer.Install()
+        if ($DownloadResult.ResultCode -eq 2) {
+            Write-Host "Updates downloaded successfully"
+            
+            # Install updates
+            $Installer = $UpdateSession.CreateUpdateInstaller()
+            $Installer.Updates = $UpdateCollection
+            $InstallResult = $Installer.Install()
+            
+            $Results = @{
+                UpdatesInstalled = $UpdateCollection.Count
+                RebootRequired = $InstallResult.RebootRequired
+                Status = "Installation completed"
+                ResultCode = $InstallResult.ResultCode
+                InstalledUpdates = $InstallList
+            }
+            
+            Write-Host "Installation completed. Result code: $($InstallResult.ResultCode)"
+            Write-Host "Reboot required: $($InstallResult.RebootRequired)"
+        } else {
+            $Results = @{
+                UpdatesInstalled = 0
+                RebootRequired = $false
+                Status = "Download failed"
+                ResultCode = $DownloadResult.ResultCode
+            }
+            Write-Host "Download failed with result code: $($DownloadResult.ResultCode)"
+        }
         
-        Write-Host "Installation completed with result code: $($InstallResult.ResultCode)"
-        Write-Host "Reboot required: $($InstallResult.RebootRequired)"
-        
-        # Return JSON-like output for parsing
-        @{
-            ResultCode = $InstallResult.ResultCode
-            RebootRequired = $InstallResult.RebootRequired
-            UpdatesInstalled = $UpdateCollection.Count
-        } | ConvertTo-Json
-      register: windows_updates
-      when: windows_pending.stdout_lines[-1] | int > 0
-      changed_when: windows_updates.stdout is defined and 'ResultCode' in windows_updates.stdout
+        $Results | ConvertTo-Json -Depth 2
+      register: windows_install
+      when: 
+        - windows_search.stdout is defined
+        - (windows_search.stdout | from_json).TotalUpdates > 0
 
+    # Reboot if required
     - name: Reboot Windows if required
       win_reboot:
         reboot_timeout: 1200
         test_command: whoami
       when: 
-        - windows_updates is defined
-        - windows_updates.stdout is defined
-        - '"RebootRequired": true' in windows_updates.stdout
+        - windows_install is defined
+        - windows_install.stdout is defined
+        - (windows_install.stdout | from_json).RebootRequired == true
 
-    - name: Save Windows updates log
+    # Gather system information
+    - name: Gather Windows system information
+      win_shell: |
+        $SearchResults = '{{ windows_search.stdout | default("{}") }}'
+        $InstallResults = '{{ windows_install.stdout | default("{}") }}'
+        
+        $OS = Get-WmiObject -Class Win32_OperatingSystem
+        $Computer = Get-WmiObject -Class Win32_ComputerSystem
+        
+        Write-Host "=== System Information ==="
+        Write-Host "Hostname: $($Computer.Name)"
+        Write-Host "OS: $($OS.Caption)"
+        Write-Host "Version: $($OS.Version)"
+        Write-Host "Architecture: $($OS.OSArchitecture)"
+        Write-Host "Last Boot: $($OS.ConvertToDateTime($OS.LastBootUpTime))"
+        Write-Host "Update Date: $(Get-Date)"
+        Write-Host ""
+        
+        Write-Host "=== Update Summary ==="
+        if ($SearchResults -ne '{}') {
+            $Search = $SearchResults | ConvertFrom-Json
+            Write-Host "Total Updates Available: $($Search.TotalUpdates)"
+            Write-Host "Security Updates: $($Search.SecurityUpdates)"
+            Write-Host "Critical Updates: $($Search.CriticalUpdates)"
+            Write-Host "Other Updates: $($Search.OtherUpdates)"
+        }
+        
+        if ($InstallResults -ne '{}') {
+            $Install = $InstallResults | ConvertFrom-Json
+            Write-Host "Updates Installed: $($Install.UpdatesInstalled)"
+            Write-Host "Reboot Required: $($Install.RebootRequired)"
+            Write-Host "Installation Status: $($Install.Status)"
+        } else {
+            Write-Host "No updates were installed"
+        }
+        
+        Write-Host ""
+        Write-Host "=== System Status ==="
+        Write-Host "Total RAM: $([math]::Round($Computer.TotalPhysicalMemory / 1GB, 2)) GB"
+        Write-Host "Available RAM: $([math]::Round((Get-WmiObject -Class Win32_PerfRawData_PerfOS_Memory).AvailableMBytes / 1024, 2)) GB"
+        
+        $Disk = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'"
+        Write-Host "C: Drive Space: $([math]::Round($Disk.FreeSpace / 1GB, 2)) GB free of $([math]::Round($Disk.Size / 1GB, 2)) GB total"
+        
+        Write-Host "CPU Load: $((Get-WmiObject -Class Win32_Processor | Measure-Object -Property LoadPercentage -Average).Average)%"
+      register: windows_info
+      changed_when: false
+
+    # Save log file
+    - name: Save Windows update log
+      copy:
+        content: "{{ windows_info.stdout }}"
+        dest: "{{ log_dir }}/windows_updates_{{ inventory_hostname }}_{{ ansible_date_time.iso8601_basic_short }}.log"
+      delegate_to: localhost
+
+# ============================================================================
+# SUMMARY REPORT
+# ============================================================================
+- name: Generate summary report
+  hosts: localhost
+  gather_facts: yes
+  vars:
+    log_dir: "/tmp/update_logs"
+  tasks:
+    - name: Create summary report
       copy:
         content: |
-          Windows Update Log for {{ inventory_hostname }}
+          ========================================
+          MULTI-PLATFORM UPDATE SUMMARY REPORT
+          ========================================
+          
           Generated: {{ ansible_date_time.iso8601 }}
-          OS Version: {{ ansible_facts['distribution'] | default('Windows') }} {{ ansible_facts['distribution_version'] | default('Unknown') }}
+          Ansible Controller: {{ ansible_hostname }}
           
-          Updates Found: {{ windows_pending.stdout_lines[-1] | default(0) }}
+          Update logs have been saved to: {{ log_dir }}
           
-          {% if windows_pending.stdout_lines is defined and windows_pending.stdout_lines | length > 1 %}
-          Available Updates:
-          {% for line in windows_pending.stdout_lines[:-1] %}
-          {{ line }}
+          Individual host logs:
+          {% for file in ansible_local_temp.files | default([]) %}
+          - {{ file }}
           {% endfor %}
-          {% endif %}
           
-          {% if windows_updates.stdout is defined %}
-          Installation Results:
-          {{ windows_updates.stdout }}
-          {% endif %}
-        dest: "{{ log_dir }}/windows_updates_{{ inventory_hostname }}_{{ ansible_date_time.iso8601 }}.log"
-      delegate_to: localhost
+          ========================================
+          NEXT STEPS:
+          ========================================
+          
+          1. Review individual host logs for details
+          2. Verify all systems are functioning properly
+          3. Schedule next maintenance window
+          4. Update change management documentation
+          
+          ========================================
+        dest: "{{ log_dir }}/UPDATE_SUMMARY_{{ ansible_date_time.iso8601_basic_short }}.txt"
+      run_once: true
+
+    - name: Display completion message
+      debug:
+        msg: 
+          - "===== UPDATE PROCESS COMPLETED ====="
+          - "Check {{ log_dir }} for detailed logs"
+          - "Summary report: {{ log_dir }}/UPDATE_SUMMARY_{{ ansible_date_time.iso8601_basic_short }}.txt"
