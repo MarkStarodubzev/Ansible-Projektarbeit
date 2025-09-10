@@ -1,18 +1,18 @@
 ---
-- name: Update Ubuntu servers
+- name: Update Linux servers
   hosts: linux
   gather_facts: yes
   become: yes
   vars_files:
     - vault.yml
   tasks:
-    - name: Update apt cache
-      apt:
+    - name: Update Package cache
+      package:
         update_cache: yes
         cache_valid_time: 3600
 
     - name: Upgrade all packages
-      apt:
+      package:
         upgrade: dist
         autoremove: yes
         autoclean: yes
@@ -23,7 +23,7 @@
         test_command: whoami
 
     - name: Check for further updates
-      apt:
+      package:
         update_cache: yes
         upgrade: yes
       register: ubuntu_updates
