@@ -4,7 +4,7 @@
   gather_facts: yes
   vars:
     windows_reboot: yes
-    central_csv_file: /var/log/ansible_central_updates.csv
+    central_csv_file: /home/ansible/ansible_central_updates.csv
 
   tasks:
     # --------------------------
@@ -87,17 +87,16 @@
       when: ansible_os_family == "Windows"
 
     # --------------------------
-    # Send log line to central CSV
+    # Ensure central CSV exists (on Controller)
     # --------------------------
     - name: Ensure central CSV exists
       ansible.builtin.file:
         path: "{{ central_csv_file }}"
         state: touch
-        mode: '0644'
       delegate_to: localhost
       run_once: true
 
-    - name: Add header if file empty
+    - name: Add CSV header if file is empty
       ansible.builtin.shell: |
         if [ ! -s {{ central_csv_file }} ]; then
           echo "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" > {{ central_csv_file }}
