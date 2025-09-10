@@ -103,55 +103,96 @@
   gather_facts: yes
   # No become needed for Windows
   tasks:
-    - name: Check for Windows updates
-      community.windows.win_updates:
-        category_names:
-          - SecurityUpdates
-          - CriticalUpdates
-          - UpdateRollups
-          - Updates
-        state: searched
+    - name: Check for Windows updates using PowerShell
+      win_shell: |
+        $UpdateSession = New-Object -ComObject Microsoft.Update.Session
+        $UpdateSearcher = $UpdateSession.CreateUpdateSearcher()
+        $SearchResult = $UpdateSearcher.Search("IsInstalled=0 and Type='Software' and IsHidden=0")
+        Write-Host "Found $($SearchResult.Updates.Count) updates"
+        foreach ($Update in $SearchResult.Updates) {
+            Write-Host "- $($Update.Title)"
+        }
+        $SearchResult.Updates.Count
       register: windows_pending
+      changed_when: false
 
     - name: Display pending updates
       debug:
-        msg: "Found {{ windows_pending.found_update_count | default(0) }} pending updates"
+        msg: "Found {{ windows_pending.stdout_lines[-1] | default(0) }} pending updates"
 
-    - name: Install Windows updates
-      community.windows.win_updates:
-        category_names:
-          - SecurityUpdates
-          - CriticalUpdates
-          - UpdateRollups
-        state: installed
-        reboot: yes
-        reboot_timeout: 1200
+    - name: Install Windows updates using PowerShell
+      win_shell: |
+        $UpdateSession = New-Object -ComObject Microsoft.Update.Session
+        $UpdateSearcher = $UpdateSession.CreateUpdateSearcher()
+        $SearchResult = $UpdateSearcher.Search("IsInstalled=0 and Type='Software' and IsHidden=0")
+        
+        if ($SearchResult.Updates.Count -eq 0) {
+            Write-Host "No updates available"
+            exit 0
+        }
+        
+        $UpdateCollection = New-Object -ComObject Microsoft.Update.UpdateColl
+        foreach ($Update in $SearchResult.Updates) {
+            if ($Update.Title -match "Security|Critical") {
+                $UpdateCollection.Add($Update) | Out-Null
+                Write-Host "Adding: $($Update.Title)"
+            }
+        }
+        
+        if ($UpdateCollection.Count -eq 0) {
+            Write-Host "No critical or security updates found"
+            exit 0
+        }
+        
+        $Downloader = $UpdateSession.CreateUpdateDownloader()
+        $Downloader.Updates = $UpdateCollection
+        $DownloadResult = $Downloader.Download()
+        
+        $Installer = $UpdateSession.CreateUpdateInstaller()
+        $Installer.Updates = $UpdateCollection
+        $InstallResult = $Installer.Install()
+        
+        Write-Host "Installation completed with result code: $($InstallResult.ResultCode)"
+        Write-Host "Reboot required: $($InstallResult.RebootRequired)"
+        
+        # Return JSON-like output for parsing
+        @{
+            ResultCode = $InstallResult.ResultCode
+            RebootRequired = $InstallResult.RebootRequired
+            UpdatesInstalled = $UpdateCollection.Count
+        } | ConvertTo-Json
       register: windows_updates
-      when: windows_pending.found_update_count | default(0) > 0
+      when: windows_pending.stdout_lines[-1] | int > 0
+      changed_when: windows_updates.stdout is defined and 'ResultCode' in windows_updates.stdout
+
+    - name: Reboot Windows if required
+      win_reboot:
+        reboot_timeout: 1200
+        test_command: whoami
+      when: 
+        - windows_updates is defined
+        - windows_updates.stdout is defined
+        - '"RebootRequired": true' in windows_updates.stdout
 
     - name: Save Windows updates log
       copy:
         content: |
           Windows Update Log for {{ inventory_hostname }}
           Generated: {{ ansible_date_time.iso8601 }}
-          OS Version: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}
+          OS Version: {{ ansible_facts['distribution'] | default('Windows') }} {{ ansible_facts['distribution_version'] | default('Unknown') }}
           
-          Updates Found: {{ windows_pending.found_update_count | default(0) }}
-          Updates Installed: {{ windows_updates.installed_update_count | default(0) }}
-          Reboot Required: {{ windows_updates.reboot_required | default(false) }}
+          Updates Found: {{ windows_pending.stdout_lines[-1] | default(0) }}
           
-          {% if windows_updates.updates is defined %}
-          Installed Updates:
-          {% for update in windows_updates.updates %}
-          - {{ update.title }}
+          {% if windows_pending.stdout_lines is defined and windows_pending.stdout_lines | length > 1 %}
+          Available Updates:
+          {% for line in windows_pending.stdout_lines[:-1] %}
+          {{ line }}
           {% endfor %}
           {% endif %}
           
-          {% if windows_pending.updates is defined %}
-          Pending Updates:
-          {% for update in windows_pending.updates %}
-          - {{ update.title }}
-          {% endfor %}
+          {% if windows_updates.stdout is defined %}
+          Installation Results:
+          {{ windows_updates.stdout }}
           {% endif %}
         dest: "{{ log_dir }}/windows_updates_{{ inventory_hostname }}_{{ ansible_date_time.iso8601 }}.log"
       delegate_to: localhost
