@@ -1,35 +1,48 @@
 ---
-- name: Update Linux servers
+- name: Update Linux servers (platform-specific)
   hosts: linux
   gather_facts: yes
   become: yes
   vars_files:
     - vault.yml
   tasks:
-    - name: Update Package cache
-      package:
+    - name: Update package cache and upgrade packages on Debian/Ubuntu
+      apt:
         update_cache: yes
-
-    - name: Upgrade all packages
-      package:
         upgrade: dist
         autoremove: yes
         autoclean: yes
+      register: ubuntu_updates
+      when: ansible_facts['os_family'] == "Debian"
 
-    - name: Reboot if kernel upgraded
+    - name: Update package cache and upgrade packages on Fedora/RHEL
+      dnf:
+        name: "*"
+        state: latest
+        update_cache: yes
+        autoremove: yes
+        clean: yes
+      register: fedora_updates
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Reboot if kernel upgraded (Linux)
       reboot:
         reboot_timeout: 200
         test_command: whoami
 
-    - name: Check for further updates
-      package:
-        update_cache: yes
-        upgrade: yes
-      register: ubuntu_updates
-
-    - name: Collect Linux updates for logging
+    - name: Collect Linux updates for logging (actual packages)
       set_fact:
-        updates_log_entry: "{{ updates_log_entry | default({}) | combine({inventory_hostname: {'os': 'Linux', 'updates': ubuntu_updates.upgraded | default([])}}) }}"
+        updates_log_entry: >-
+          {{
+            updates_log_entry | default({}) | combine({
+              inventory_hostname: {
+                'os': ansible_facts['os_family'],
+                'updates': (ubuntu_updates.upgraded | default([])) + (fedora_updates.changes | default([]))
+              }
+            })
+          }}
+      delegate_to: localhost
+      run_once: true
 
 - name: Update Windows servers
   hosts: windows
@@ -40,7 +53,6 @@
         category_names:
           - SecurityUpdates
           - CriticalUpdates
-          - UpdateRollups
         state: searched
       register: windows_pending
 
@@ -56,6 +68,8 @@
     - name: Collect Windows updates for logging
       set_fact:
         updates_log_entry: "{{ updates_log_entry | default({}) | combine({inventory_hostname: {'os': 'Windows', 'updates': windows_updates.updates | default([])}}) }}"
+      delegate_to: localhost
+      run_once: true
 
 - name: Write updates log to JSON file on controller with timestamp
   hosts: localhost
