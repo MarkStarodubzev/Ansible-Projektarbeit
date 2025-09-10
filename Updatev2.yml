@@ -4,7 +4,7 @@
   gather_facts: yes
   vars:
     windows_reboot: yes
-    central_csv_file: /home/ansible/ansible_central_updates.csv
+    central_csv_file: /home/ansibleserver/logs/ansible_central_updates.csv
 
   tasks:
     # --------------------------
