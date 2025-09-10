@@ -2,25 +2,63 @@
 - name: Update Linux and Windows systems
   hosts: all
   gather_facts: yes
-  become: yes  # Für Linux Root-Rechte
+  become: yes
+  vars:
+    windows_reboot: yes  # Optional: Windows nach Updates neustarten
 
   tasks:
-    - name: Update Debian/Ubuntu systems
+    # --------------------------
+    # LINUX-UPDATES
+    # --------------------------
+    - name: Update APT-based Linux systems
       apt:
         update_cache: yes
         upgrade: dist
-      when: ansible_os_family == "Debian"
+      when: ansible_pkg_mgr == "apt"
+      register: apt_result
 
-    - name: Update RedHat/CentOS/Fedora systems
+    - name: Show APT update result
+      debug:
+        var: apt_result
+      when: ansible_pkg_mgr == "apt"
+
+    - name: Update YUM/DNF-based Linux systems
       yum:
         name: "*"
         state: latest
-      when: ansible_os_family == "RedHat"
+      when: ansible_pkg_mgr in ["yum", "dnf"]
+      register: yum_result
 
-    - name: Update Windows systems
+    - name: Show YUM/DNF update result
+      debug:
+        var: yum_result
+      when: ansible_pkg_mgr in ["yum", "dnf"]
+
+    - name: Update Zypper-based Linux systems (openSUSE/SLE)
+      zypper:
+        name: "*"
+        state: latest
+      when: ansible_pkg_mgr == "zypper"
+      register: zypper_result
+
+    - name: Show Zypper update result
+      debug:
+        var: zypper_result
+      when: ansible_pkg_mgr == "zypper"
+
+    # --------------------------
+    # WINDOWS-UPDATES
+    # --------------------------
+    - name: Install Windows updates
       win_updates:
         category_names:
           - SecurityUpdates
           - CriticalUpdates
-        reboot: yes
+        reboot: "{{ windows_reboot }}"
+      when: ansible_os_family == "Windows"
+      register: win_result
+
+    - name: Show Windows update result
+      debug:
+        var: win_result
       when: ansible_os_family == "Windows"
