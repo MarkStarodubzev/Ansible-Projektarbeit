@@ -40,6 +40,7 @@
         category_names:
           - SecurityUpdates
           - CriticalUpdates
+          - UpdateRollups
         state: searched
       register: windows_pending
 
