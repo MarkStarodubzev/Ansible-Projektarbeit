@@ -1,10 +1,19 @@
 ---
+- name: Set become password from Vault
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vault.yml
+  tasks:
+    - name: Set ansible_become_pass
+      set_fact:
+        ansible_become_pass: "{{ vault_become_password }}"  # Dein Passwort aus Vault
+
 - name: Update Linux servers
   hosts: linux
   gather_facts: yes
   become: yes
-  vars_files:
-    - vault.yml
+  become_method: sudo
   tasks:
 
     - name: Update package cache (Ubuntu/Debian)
@@ -18,23 +27,20 @@
         autoremove: yes
       when: ansible_facts['os_family'] == "Debian"
 
-    - name: Update package cache (Fedora/RHEL)
-      ansible.builtin.dnf:
-        update_cache: yes
-      when: ansible_facts['os_family'] == "RedHat"
+    - name: Update package cache (Fedora)
+      ansible.builtin.command:
+        cmd: dnf -y makecache
+      when: ansible_facts['distribution'] == "Fedora"
 
-    - name: Upgrade all packages (Fedora/RHEL)
-      ansible.builtin.dnf:
-        name: "*"
-        state: latest
-        autoremove: yes
-      when: ansible_facts['os_family'] == "RedHat"
+    - name: Upgrade all packages (Fedora)
+      ansible.builtin.command:
+        cmd: dnf -y upgrade --refresh
+      when: ansible_facts['distribution'] == "Fedora"
 
     - name: Reboot if kernel upgraded
       ansible.builtin.reboot:
         reboot_timeout: 200
         test_command: whoami
-      when: ansible_facts['os_family'] in ["Debian", "RedHat"]
 
     - name: Collect Linux updates for logging
       set_fact:
