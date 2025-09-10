@@ -1,4 +1,14 @@
 ---
+- name: Initialize updates log
+  hosts: all
+  gather_facts: no
+  pre_tasks:
+    - name: Initialize updates_log_entry on controller
+      set_fact:
+        updates_log_entry: {}
+      delegate_to: localhost
+      run_once: true
+
 - name: Update Linux servers
   hosts: linux
   gather_facts: yes
@@ -6,13 +16,6 @@
   vars_files:
     - vault.yml
   tasks:
-
-    # Initialisiere das Logging
-    - name: Initialize updates_log_entry
-      set_fact:
-        updates_log_entry: {}
-      delegate_to: localhost
-      run_once: true
 
     # Ubuntu/Debian Tasks
     - name: Update package cache (Ubuntu/Debian)
@@ -28,7 +31,7 @@
       register: ubuntu_updates
       when: ansible_facts['os_family'] == "Debian"
 
-    # Fedora 42 Tasks über CLI (kein dnf5 Modul)
+    # Fedora 42 Tasks via CLI (kein dnf5 Modul)
     - name: Update package cache (Fedora/RHEL)
       command: dnf -y makecache
       register: fedora_cache
@@ -49,7 +52,7 @@
         reboot_timeout: 200
         test_command: whoami
 
-    # Sammle Updates für Logging
+    # Collect Linux updates for logging
     - name: Collect Linux updates for logging
       set_fact:
         updates_log_entry: >-
@@ -87,6 +90,7 @@
         reboot: yes
       register: windows_updates
 
+    # Collect Windows updates for logging
     - name: Collect Windows updates for logging
       set_fact:
         updates_log_entry: "{{ updates_log_entry | combine({inventory_hostname: {'os': 'Windows', 'updates': windows_updates.updates | default([])}}) }}"
