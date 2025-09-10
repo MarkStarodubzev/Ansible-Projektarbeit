@@ -1,36 +1,30 @@
 ---
-- name: Set become password for current host
-  hosts: all
-  gather_facts: yes
-  vars_files:
-    - vault.yml
-  tasks:
-    - name: Set become password from vault
-      set_fact:
-        ansible_become_password: "{{ ansible_become_passwords[inventory_hostname] }}"
-      when: ansible_facts['os_family'] in ['Debian','RedHat']
-
 - name: Update Linux servers
   hosts: linux
   gather_facts: yes
   become: yes
+  vars_files:
+    - vault.yml
   tasks:
 
     - name: Update package cache (Ubuntu/Debian)
       ansible.builtin.apt:
         update_cache: yes
       when: ansible_facts['os_family'] == "Debian"
+      become_pass: "{{ ansible_become_passwords[inventory_hostname] }}"
 
     - name: Upgrade all packages (Ubuntu/Debian)
       ansible.builtin.apt:
         upgrade: dist
         autoremove: yes
       when: ansible_facts['os_family'] == "Debian"
+      become_pass: "{{ ansible_become_passwords[inventory_hostname] }}"
 
     - name: Update package cache (Fedora/RHEL)
       ansible.builtin.dnf:
         update_cache: yes
       when: ansible_facts['os_family'] == "RedHat"
+      become_pass: "{{ ansible_become_passwords[inventory_hostname] }}"
 
     - name: Upgrade all packages (Fedora/RHEL)
       ansible.builtin.dnf:
@@ -38,11 +32,13 @@
         state: latest
         autoremove: yes
       when: ansible_facts['os_family'] == "RedHat"
+      become_pass: "{{ ansible_become_passwords[inventory_hostname] }}"
 
     - name: Reboot if kernel upgraded
-      ansible.builtin.reboot:
+      reboot:
         reboot_timeout: 200
         test_command: whoami
+      when: ansible_facts['os_family'] == "RedHat" or ansible_facts['os_family'] == "Debian"
 
     - name: Collect Linux updates for logging
       set_fact:
@@ -72,27 +68,27 @@
 
     - name: Collect Windows updates for logging
       set_fact:
-        windows_updates_log: "{{ windows_updates.updates }}"
+        windows_updates_log: "{{ windows_updates.updates | default([]) }}"
 
-- name: Save all updates to timestamped JSON on controller
+- name: Write updates log to JSON file on controller
   hosts: localhost
   gather_facts: no
   vars:
-    log_dir: "/tmp/ansible_updates"
-    log_file: "{{ log_dir }}/updates_{{ lookup('pipe','date +%Y%m%d_%H%M%S') }}.json"
+    log_dir: "/tmp/ansible_update_logs"
+    log_file: "{{ log_dir }}/update_log_{{ ansible_date_time.iso8601_basic_short }}.json"
   tasks:
+
     - name: Ensure log directory exists
       file:
         path: "{{ log_dir }}"
         state: directory
+        mode: '0755'
 
-    - name: Combine all update logs
-      set_fact:
-        updates_log_entry:
-          linux: "{{ hostvars | dict2items | selectattr('value.linux_updates_log','defined') | items2dict }}"
-          windows: "{{ hostvars | dict2items | selectattr('value.windows_updates_log','defined') | items2dict }}"
-
-    - name: Write updates log to JSON file
+    - name: Save all updates to timestamped JSON
       copy:
-        content: "{{ updates_log_entry | to_nice_json }}"
         dest: "{{ log_file }}"
+        content: |
+          {
+            "linux": {{ hostvars | dict2items | selectattr('value.linux_updates_log','defined') | map(attribute='value.linux_updates_log') | list | to_nice_json }},
+            "windows": {{ hostvars | dict2items | selectattr('value.windows_updates_log','defined') | map(attribute='value.windows_updates_log') | list | to_nice_json }}
+          }
