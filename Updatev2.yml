@@ -1,23 +1,17 @@
 ---
-# 1️⃣ Initialisierung der Logging-Variable auf dem Controller
-- name: Initialize updates_log_entry on controller
+- name: Init updates log
   hosts: localhost
   gather_facts: no
   tasks:
-    - name: Ensure updates_log_entry exists
+    - name: Initialize updates_log_entry
       set_fact:
         updates_log_entry: {}
 
-# 2️⃣ Linux-Hosts aktualisieren
 - name: Update Linux servers
   hosts: linux
   gather_facts: yes
   become: yes
-  vars_files:
-    - vault.yml
   tasks:
-
-    # Ubuntu/Debian Tasks
     - name: Update package cache (Ubuntu/Debian)
       apt:
         update_cache: yes
@@ -27,53 +21,45 @@
       apt:
         upgrade: dist
         autoremove: yes
-        autoclean: yes
-      register: ubuntu_updates
       when: ansible_facts['os_family'] == "Debian"
+      register: ubuntu_updates
 
-    # Fedora Tasks via CLI (kein dnf5 Modul)
     - name: Update package cache (Fedora/RHEL)
-      command: dnf -y makecache
-      register: fedora_cache
+      dnf5:
+        update_cache: yes
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Upgrade all packages (Fedora/RHEL)
-      command: dnf -y upgrade
+      dnf5:
+        name: "*"
+        state: latest
+      when: ansible_facts['os_family'] == "RedHat"
       register: fedora_updates
-      when: ansible_facts['os_family'] == "RedHat"
 
-    - name: Autoremove unnecessary packages (Fedora/RHEL)
-      command: dnf -y autoremove
-      when: ansible_facts['os_family'] == "RedHat"
-
-    # Reboot if kernel updated
     - name: Reboot if kernel upgraded
       reboot:
         reboot_timeout: 200
         test_command: whoami
 
-    # Collect Linux updates for logging
+    # Logging für Linux
     - name: Collect Linux updates for logging
       set_fact:
         updates_log_entry: >-
           {{
-            updates_log_entry | combine({
+            (updates_log_entry | default({})) | combine({
               inventory_hostname: {
                 'os': ansible_facts['os_family'],
-                'updates': (ubuntu_updates.upgraded | default([])) + (fedora_updates.stdout_lines | default([]))
+                'updates': (ubuntu_updates.stdout_lines | default([])) +
+                           (fedora_updates.results | default([]))
               }
             })
           }}
       delegate_to: localhost
-      run_once: true
-      when: ansible_facts['os_family'] in ["Debian", "RedHat"]
 
-# 3️⃣ Windows-Hosts aktualisieren
 - name: Update Windows servers
   hosts: windows
   gather_facts: yes
   tasks:
-
     - name: Check for updates
       win_updates:
         category_names:
@@ -91,22 +77,25 @@
         reboot: yes
       register: windows_updates
 
-    # Collect Windows updates for logging
+    # Logging für Windows
     - name: Collect Windows updates for logging
       set_fact:
-        updates_log_entry: "{{ updates_log_entry | combine({inventory_hostname: {'os': 'Windows', 'updates': windows_updates.updates | default([])}}) }}"
+        updates_log_entry: >-
+          {{
+            (updates_log_entry | default({})) | combine({
+              inventory_hostname: {
+                'os': 'Windows',
+                'updates': windows_updates.updates | default([])
+              }
+            })
+          }}
       delegate_to: localhost
-      run_once: true
 
-# 4️⃣ JSON-Log auf Controller speichern
 - name: Write updates log to JSON file on controller with timestamp
   hosts: localhost
   gather_facts: no
-  vars:
-    timestamp: "{{ lookup('pipe', 'date +%Y-%m-%d_%H-%M-%S') }}"
-    log_file: "/tmp/all_updates_log_{{ timestamp }}.json"
   tasks:
     - name: Save all updates to timestamped JSON
       copy:
-        dest: "{{ log_file }}"
+        dest: "/tmp/updates_log_{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}.json"
         content: "{{ updates_log_entry | to_nice_json }}"
