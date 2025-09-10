@@ -2,9 +2,8 @@
 - name: Update Linux and Windows systems
   hosts: all
   gather_facts: yes
-  become: yes
   vars:
-    windows_reboot: yes  # Optional: Windows nach Updates neustarten
+    windows_reboot: yes
 
   tasks:
     # --------------------------
@@ -14,31 +13,34 @@
       apt:
         update_cache: yes
         upgrade: dist
-      when: ansible_pkg_mgr == "apt"
+      when: ansible_os_family == "Debian"
+      become: yes
       register: apt_result
 
     - name: Show APT update result
       debug:
         var: apt_result
-      when: ansible_pkg_mgr == "apt"
+      when: ansible_os_family == "Debian"
 
     - name: Update YUM/DNF-based Linux systems
       yum:
         name: "*"
         state: latest
-      when: ansible_pkg_mgr in ["yum", "dnf"]
+      when: ansible_os_family == "RedHat"
+      become: yes
       register: yum_result
 
     - name: Show YUM/DNF update result
       debug:
         var: yum_result
-      when: ansible_pkg_mgr in ["yum", "dnf"]
+      when: ansible_os_family == "RedHat"
 
-    - name: Update Zypper-based Linux systems (openSUSE/SLE)
+    - name: Update Zypper-based Linux systems
       zypper:
         name: "*"
         state: latest
       when: ansible_pkg_mgr == "zypper"
+      become: yes
       register: zypper_result
 
     - name: Show Zypper update result
