@@ -1,26 +1,24 @@
 ---
-# Playbook: Updatev3.yml
-# Funktioniert mit Semaphore + Vault/extra-vars
-
-- name: Set ansible_become_pass from extra vars
-  hosts: localhost
-  gather_facts: no
+- name: Update all servers
+  hosts: all
+  gather_facts: yes
+  become: yes
+  vars:
+    log_dir: "/tmp/update_logs"
   tasks:
-    - name: Set become password safely
-      set_fact:
-        ansible_become_pass: "{{ vault_become_password | default(ansible_become_pass) }}"
 
+    - name: Ensure log directory exists on controller
+      file:
+        path: "{{ log_dir }}"
+        state: directory
+      delegate_to: localhost
+
+# --- Linux Updates ---
 - name: Update Linux servers
   hosts: linux
   gather_facts: yes
   become: yes
   tasks:
-    - name: Ensure log directory exists on controller
-      file:
-        path: "/tmp/update_logs"
-        state: directory
-      delegate_to: localhost
-
     - name: Update package cache (Ubuntu/Debian)
       ansible.builtin.apt:
         update_cache: yes
@@ -60,19 +58,14 @@
     - name: Save Linux updates log
       copy:
         content: "{{ linux_updates.stdout }}"
-        dest: "/tmp/update_logs/linux_updates_{{ inventory_hostname }}_{{ ansible_date_time.iso8601 }}.log"
+        dest: "{{ log_dir }}/linux_updates_{{ inventory_hostname }}_{{ ansible_date_time.iso8601 }}.log"
       delegate_to: localhost
 
+# --- Windows Updates ---
 - name: Update Windows servers
   hosts: windows
   gather_facts: yes
   tasks:
-    - name: Ensure log directory exists on controller
-      file:
-        path: "/tmp/update_logs"
-        state: directory
-      delegate_to: localhost
-
     - name: Check for updates
       win_updates:
         category_names:
@@ -93,5 +86,5 @@
     - name: Save Windows updates log
       copy:
         content: "{{ windows_updates }}"
-        dest: "/tmp/update_logs/windows_updates_{{ inventory_hostname }}_{{ ansible_date_time.iso8601 }}.log"
+        dest: "{{ log_dir }}/windows_updates_{{ inventory_hostname }}_{{ ansible_date_time.iso8601 }}.log"
       delegate_to: localhost
