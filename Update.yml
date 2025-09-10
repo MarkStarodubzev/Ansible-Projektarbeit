@@ -1,6 +1,6 @@
 ---
 - name: Update Ubuntu servers
-  hosts: Linux
+  hosts: linux
   gather_facts: yes
   become: yes
   tasks:
@@ -31,7 +31,7 @@
         msg: "{{ ubuntu_updates }}"
 
 - name: Update Windows servers
-  hosts: Windows
+  hosts: windows
   gather_facts: yes
   tasks:
   
