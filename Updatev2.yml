@@ -21,7 +21,6 @@
         state: latest
         update_cache: yes
         autoremove: yes
-        clean: yes
       register: fedora_updates
       when: ansible_facts['os_family'] == "RedHat"
 
