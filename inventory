@@ -2,6 +2,11 @@
 192.168.56.112 ansible_user=ansiblefedora
 192.168.56.116 ansible_user=ansibleubuntu
 
+[linux:vars]
+ansible_become=true
+ansible_become_method=sudo
+
+
 [windows]
 192.168.56.115
 
