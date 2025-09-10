@@ -6,30 +6,47 @@
   vars_files:
     - vault.yml
   tasks:
-    - name: Update Package cache
-      package:
-        update_cache: yes
 
-    - name: Upgrade all packages
-      package:
+    - name: Update Package cache (Ubuntu/Debian)
+      apt:
+        update_cache: yes
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Upgrade all packages (Ubuntu/Debian)
+      apt:
         upgrade: dist
         autoremove: yes
         autoclean: yes
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Update Package cache (Fedora/RHEL)
+      dnf:
+        update_cache: yes
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Upgrade all packages (Fedora/RHEL)
+      dnf:
+        name: "*"
+        state: latest
+        autoremove: yes
+      when: ansible_facts['os_family'] == "RedHat"
 
     - name: Reboot if kernel upgraded
       reboot:
         reboot_timeout: 200
         test_command: whoami
 
-    - name: Check for further updates
-      package:
+    - name: Check for further updates (Ubuntu/Debian)
+      apt:
         update_cache: yes
         upgrade: yes
       register: ubuntu_updates
+      when: ansible_facts['os_family'] == "Debian"
 
-    - name: Show available updates
+    - name: Show available updates (Ubuntu/Debian)
       debug:
         msg: "{{ ubuntu_updates }}"
+      when: ansible_facts['os_family'] == "Debian"
 
 - name: Update Windows servers
   hosts: windows
