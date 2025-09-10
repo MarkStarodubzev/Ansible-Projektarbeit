@@ -4,7 +4,8 @@
   gather_facts: yes
   vars:
     windows_reboot: yes
-    central_csv_file: /home/ansibleserver/Ansible-Projektarbeit/ansible_central_updates.csv
+    # Sicherer Pfad im Home-Verzeichnis des Benutzers, der Semaphore/Ansible ausführt
+    central_csv_file: "{{ ansible_env.HOME }}/ansible_central_updates.csv"
 
   tasks:
     # --------------------------
@@ -87,7 +88,7 @@
       when: ansible_os_family == "Windows"
 
     # --------------------------
-    # Ensure central CSV exists (on Controller)
+    # Ensure central CSV exists (auf Controller)
     # --------------------------
     - name: Ensure central CSV exists
       ansible.builtin.file:
