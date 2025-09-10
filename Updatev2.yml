@@ -39,19 +39,17 @@
       when: ansible_distribution in ["RedHat", "CentOS", "Rocky", "AlmaLinux"] and ansible_distribution_major_version | int < 9
 
     # --------------------------
-    # Fedora 42+ (dnf5)
+    # Fedora 42+ (dnf via shell)
     # --------------------------
-    - name: Update Fedora 42+ systems using dnf5
-      community.general.dnf5:
-        name: "*"
-        state: latest
+    - name: Update Fedora 42+ systems using shell
+      ansible.builtin.shell: dnf -y upgrade
       when: ansible_distribution == "Fedora" and ansible_distribution_major_version | int >= 42
       become: yes
-      register: dnf5_result
+      register: dnf_shell_result
 
-    - name: Show DNF5 update result
+    - name: Show DNF shell result
       debug:
-        var: dnf5_result
+        var: dnf_shell_result
       when: ansible_distribution == "Fedora" and ansible_distribution_major_version | int >= 42
 
     # --------------------------
