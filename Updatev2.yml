@@ -20,24 +20,16 @@
         autoclean: yes
       when: ansible_facts['os_family'] == "Debian"
 
-    # Fedora/RHEL Tasks
-    - name: Check if dnf5 is installed
-      stat:
-        path: /usr/bin/dnf5
-      register: dnf5_installed
-      when: ansible_facts['os_family'] == "RedHat"
-
-    - name: Set package manager for Fedora
-      set_fact:
-        fedora_pkg_manager: "{{ 'dnf-legacy' if dnf5_installed.stat.exists else 'dnf' }}"
-      when: ansible_facts['os_family'] == "RedHat"
-
+    # Fedora/RHEL Tasks mit klassischem DNF
     - name: Update package cache (Fedora/RHEL)
-      command: "{{ fedora_pkg_manager }} -y makecache"
+      dnf:
+        update_cache: yes
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Upgrade all packages (Fedora/RHEL)
-      command: "{{ fedora_pkg_manager }} -y upgrade"
+      dnf:
+        name: "*"
+        state: latest
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Reboot if kernel upgraded
