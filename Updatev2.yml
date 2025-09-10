@@ -1,9 +1,7 @@
 ---
-# Playbook für Semaphore
-# Funktioniert für Ubuntu/Debian, Fedora/RHEL und Windows
-# Logging erfolgt auf dem Controller in timestamped JSON
+# Semaphore-kompatibles Playbook für Updates und Logging
 
-- name: Set ansible_become_pass from Vault (Semaphore)
+- name: Set ansible_become_pass from Vault
   hosts: localhost
   gather_facts: no
   vars_files:
@@ -18,6 +16,7 @@
   gather_facts: yes
   become: yes
   tasks:
+
     - name: Update package cache (Ubuntu/Debian)
       apt:
         update_cache: yes
