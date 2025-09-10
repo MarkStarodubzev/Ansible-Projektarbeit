@@ -11,20 +11,17 @@
       ansible.builtin.apt:
         update_cache: yes
       when: ansible_facts['os_family'] == "Debian"
-      become_pass: "{{ ansible_become_passwords[inventory_hostname] }}"
 
     - name: Upgrade all packages (Ubuntu/Debian)
       ansible.builtin.apt:
         upgrade: dist
         autoremove: yes
       when: ansible_facts['os_family'] == "Debian"
-      become_pass: "{{ ansible_become_passwords[inventory_hostname] }}"
 
     - name: Update package cache (Fedora/RHEL)
       ansible.builtin.dnf:
         update_cache: yes
       when: ansible_facts['os_family'] == "RedHat"
-      become_pass: "{{ ansible_become_passwords[inventory_hostname] }}"
 
     - name: Upgrade all packages (Fedora/RHEL)
       ansible.builtin.dnf:
@@ -32,13 +29,12 @@
         state: latest
         autoremove: yes
       when: ansible_facts['os_family'] == "RedHat"
-      become_pass: "{{ ansible_become_passwords[inventory_hostname] }}"
 
     - name: Reboot if kernel upgraded
-      reboot:
+      ansible.builtin.reboot:
         reboot_timeout: 200
         test_command: whoami
-      when: ansible_facts['os_family'] == "RedHat" or ansible_facts['os_family'] == "Debian"
+      when: ansible_facts['os_family'] in ["Debian", "RedHat"]
 
     - name: Collect Linux updates for logging
       set_fact:
@@ -49,7 +45,7 @@
   gather_facts: yes
   tasks:
 
-    - name: Check for updates
+    - name: Check for pending updates
       win_updates:
         category_names:
           - SecurityUpdates
@@ -79,13 +75,13 @@
   tasks:
 
     - name: Ensure log directory exists
-      file:
+      ansible.builtin.file:
         path: "{{ log_dir }}"
         state: directory
         mode: '0755'
 
     - name: Save all updates to timestamped JSON
-      copy:
+      ansible.builtin.copy:
         dest: "{{ log_file }}"
         content: |
           {
