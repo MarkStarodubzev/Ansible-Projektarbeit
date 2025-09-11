@@ -18,14 +18,20 @@
         upgrade: dist
         update_cache: yes
       register: apt_result
-      when: ansible_pkg_mgr == "apt"
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr == "apt"
       become: yes
 
     - name: Set log vars for APT
       set_fact:
         update_type: "APT"
         update_status: "{{ 'changed' if apt_result.changed else 'ok' }}"
-      when: ansible_pkg_mgr == "apt"
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr == "apt"
 
     # --------------------------
     # Linux: DNF / YUM
@@ -35,14 +41,20 @@
         name: "*"
         state: latest
       register: dnf_result
-      when: ansible_pkg_mgr in ["dnf", "yum"]
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr in ["dnf", "yum"]
       become: yes
 
     - name: Set log vars for DNF/YUM
       set_fact:
         update_type: "DNF/YUM"
         update_status: "{{ 'changed' if dnf_result.changed else 'ok' }}"
-      when: ansible_pkg_mgr in ["dnf", "yum"]
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr in ["dnf", "yum"]
 
     # --------------------------
     # Linux: Zypper
@@ -52,14 +64,20 @@
         name: "*"
         state: latest
       register: zypper_result
-      when: ansible_pkg_mgr == "zypper"
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr == "zypper"
       become: yes
 
     - name: Set log vars for Zypper
       set_fact:
         update_type: "Zypper"
         update_status: "{{ 'changed' if zypper_result.changed else 'ok' }}"
-      when: ansible_pkg_mgr == "zypper"
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr == "zypper"
 
     # --------------------------
     # Windows Updates
