@@ -1,114 +1,123 @@
 ---
-- name: Update Linux and Windows systems with local logging
+- name: Update Linux and Windows systems
   hosts: all
   gather_facts: yes
+
   vars:
-    windows_reboot: yes
-    local_csv_file: /var/log/ansible_updates.csv
+    update_log_line: "{{ ansible_date_time.date }} {{ ansible_date_time.time }}," 
+                     "{{ inventory_hostname }},{{ ansible_distribution }} {{ ansible_distribution_version }}," 
+                     "{{ update_type }},{{ update_status }},{{ reboot_required | default('nein') }}"
 
   tasks:
     # --------------------------
-    # Debian/Ubuntu
+    # Linux Updates
     # --------------------------
     - name: Update APT-based Linux systems
-      apt:
+      ansible.builtin.apt:
         update_cache: yes
         upgrade: dist
-      when: ansible_os_family == "Debian"
-      become: yes
       register: apt_result
-
-    - name: Prepare APT log line
-      set_fact:
-        update_log_line: "{{ ansible_date_time.date }},{{ ansible_date_time.time }},{{ inventory_hostname }},Debian,APT,{{ 'OK' if not apt_result.failed else 'FAILED' }},NA"
       when: ansible_os_family == "Debian"
+      vars:
+        update_type: "APT"
+        update_status: "{{ 'OK' if apt_result is succeeded else 'Fehler' }}"
 
-    # --------------------------
-    # RHEL/CentOS (yum)
-    # --------------------------
-    - name: Update RHEL/CentOS systems with yum
-      yum:
-        name: "*"
+    - name: Update YUM-based Linux systems
+      ansible.builtin.yum:
+        name: '*'
         state: latest
-      when: ansible_distribution in ["RedHat", "CentOS", "Rocky", "AlmaLinux"] and ansible_distribution_major_version | int < 9
-      become: yes
       register: yum_result
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int < 37
+      vars:
+        update_type: "YUM"
+        update_status: "{{ 'OK' if yum_result is succeeded else 'Fehler' }}"
 
-    - name: Prepare YUM log line
-      set_fact:
-        update_log_line: "{{ ansible_date_time.date }},{{ ansible_date_time.time }},{{ inventory_hostname }},{{ ansible_distribution }},YUM,{{ 'OK' if not yum_result.failed else 'FAILED' }},NA"
-      when: ansible_distribution in ["RedHat", "CentOS", "Rocky", "AlmaLinux"] and ansible_distribution_major_version | int < 9
-
-    # --------------------------
-    # Fedora 42+ (dnf shell)
-    # --------------------------
-    - name: Update Fedora 42+ systems using shell
-      ansible.builtin.shell: dnf -y upgrade
-      when: ansible_distribution == "Fedora" and ansible_distribution_major_version | int >= 42
-      become: yes
-      register: dnf_shell_result
-
-    - name: Prepare DNF log line
-      set_fact:
-        update_log_line: "{{ ansible_date_time.date }},{{ ansible_date_time.time }},{{ inventory_hostname }},Fedora,DNF,{{ 'OK' if dnf_shell_result.rc == 0 else 'FAILED' }},NA"
-      when: ansible_distribution == "Fedora" and ansible_distribution_major_version | int >= 42
-
-    # --------------------------
-    # openSUSE/SLE
-    # --------------------------
-    - name: Update Zypper-based Linux systems
-      zypper:
-        name: "*"
+    - name: Update DNF-based Linux systems
+      ansible.builtin.dnf:
+        name: '*'
         state: latest
-      when: ansible_os_family == "Suse"
-      become: yes
-      register: zypper_result
+      register: dnf_result
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 37
+      vars:
+        update_type: "DNF"
+        update_status: "{{ 'OK' if dnf_result is succeeded else 'Fehler' }}"
 
-    - name: Prepare Zypper log line
-      set_fact:
-        update_log_line: "{{ ansible_date_time.date }},{{ ansible_date_time.time }},{{ inventory_hostname }},Suse,Zypper,{{ 'OK' if not zypper_result.failed else 'FAILED' }},NA"
+    - name: Update Zypper-based Linux systems
+      community.general.zypper:
+        name: '*'
+        state: latest
+      register: zypper_result
       when: ansible_os_family == "Suse"
+      vars:
+        update_type: "Zypper"
+        update_status: "{{ 'OK' if zypper_result is succeeded else 'Fehler' }}"
 
     # --------------------------
-    # Windows
+    # Windows Updates
     # --------------------------
     - name: Install Windows updates
       win_updates:
         category_names:
           - SecurityUpdates
           - CriticalUpdates
-        reboot: "{{ windows_reboot }}"
+          - UpdateRollups
+      register: win_updates
       when: ansible_os_family == "Windows"
-      register: win_result
-
-    - name: Prepare Windows log line
-      set_fact:
-        update_log_line: "{{ ansible_date_time.date }},{{ ansible_date_time.time }},{{ inventory_hostname }},Windows,WinUpdates,OK,{{ win_result.reboot_required }}"
-      when: ansible_os_family == "Windows"
+      vars:
+        update_type: "WindowsUpdate"
+        update_status: "{{ 'OK' if win_updates is succeeded else 'Fehler' }}"
+        reboot_required: "{{ 'ja' if win_updates.reboot_required | default(false) else 'nein' }}"
 
     # --------------------------
-    # Local log file handling
+    # Logging (Linux)
     # --------------------------
-    - name: Ensure local CSV exists
+    - name: Ensure local CSV exists (Linux)
       ansible.builtin.file:
-        path: "{{ local_csv_file }}"
+        path: /var/log/ansible_updates.csv
         state: touch
         mode: '0644'
       become: yes
+      when: ansible_os_family != "Windows"
 
-    - name: Add CSV header if file is empty
+    - name: Add CSV header if file is empty (Linux)
       ansible.builtin.shell: |
-        if [ ! -s {{ local_csv_file }} ]; then
-          echo "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" > {{ local_csv_file }}
+        if [ ! -s /var/log/ansible_updates.csv ]; then
+          echo "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" > /var/log/ansible_updates.csv
         fi
       args:
         executable: /bin/bash
       become: yes
+      when: ansible_os_family != "Windows"
 
-    - name: Append update log to local CSV
+    - name: Append update log to local CSV (Linux)
       ansible.builtin.lineinfile:
-        path: "{{ local_csv_file }}"
+        path: /var/log/ansible_updates.csv
         line: "{{ update_log_line }}"
         create: yes
         insertafter: EOF
       become: yes
+      when: ansible_os_family != "Windows"
+
+    # --------------------------
+    # Logging (Windows)
+    # --------------------------
+    - name: Ensure local CSV exists (Windows)
+      win_file:
+        path: C:\ansible_updates.csv
+        state: touch
+      when: ansible_os_family == "Windows"
+
+    - name: Add CSV header if file is empty (Windows)
+      win_shell: |
+        if (!(Test-Path C:\ansible_updates.csv) -or (Get-Content C:\ansible_updates.csv).Length -eq 0) {
+          "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" | Out-File -FilePath C:\ansible_updates.csv -Encoding utf8
+        }
+      when: ansible_os_family == "Windows"
+
+    - name: Append update log to local CSV (Windows)
+      win_lineinfile:
+        path: C:\ansible_updates.csv
+        line: "{{ update_log_line }}"
+        create: yes
+        insertafter: EOF
+      when: ansible_os_family == "Windows"
