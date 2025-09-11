@@ -4,6 +4,7 @@
   gather_facts: yes
 
   vars:
+    # Default-Werte für Logging
     update_type: "Unbekannt"
     update_status: "n/a"
     reboot_required: "nein"
