@@ -4,7 +4,9 @@
   gather_facts: yes
 
   vars:
-    update_log_line: "{{ ansible_date_time.date }} {{ ansible_date_time.time }},{{ inventory_hostname }},{{ ansible_distribution }} {{ ansible_distribution_version }},{{ update_type }},{{ update_status }},{{ reboot_required | default('nein') }}"
+    update_type: "Unbekannt"
+    update_status: "n/a"
+    reboot_required: "nein"
 
   tasks:
     # --------------------------
@@ -76,6 +78,13 @@
         update_status: "{{ 'changed' if (win_update_result.updates | length > 0) else 'ok' }}"
         reboot_required: "{{ 'ja' if win_update_result.reboot_required else 'nein' }}"
       when: ansible_os_family == "Windows"
+
+    # --------------------------
+    # Build log line
+    # --------------------------
+    - name: Build update log line
+      set_fact:
+        update_log_line: "{{ ansible_date_time.date }} {{ ansible_date_time.time }},{{ inventory_hostname }},{{ ansible_distribution }} {{ ansible_distribution_version }},{{ update_type }},{{ update_status }},{{ reboot_required }}"
 
     # --------------------------
     # Local log file handling (Linux)
