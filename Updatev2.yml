@@ -1,11 +1,10 @@
 ---
-- name: Update Linux and Windows systems with centralized CSV logging
+- name: Update Linux and Windows systems with local logging
   hosts: all
   gather_facts: yes
   vars:
     windows_reboot: yes
-    # Sicherer Pfad im Home-Verzeichnis des Benutzers, der Semaphore/Ansible ausführt
-    central_csv_file: "{{ ansible_env.HOME }}/ansible_central_updates.csv"
+    local_csv_file: /var/log/ansible_updates.csv
 
   tasks:
     # --------------------------
@@ -88,27 +87,28 @@
       when: ansible_os_family == "Windows"
 
     # --------------------------
-    # Ensure central CSV exists (auf Controller)
+    # Local log file handling
     # --------------------------
-    - name: Ensure central CSV exists
+    - name: Ensure local CSV exists
       ansible.builtin.file:
-        path: "{{ central_csv_file }}"
+        path: "{{ local_csv_file }}"
         state: touch
-      delegate_to: localhost
-      run_once: true
+        mode: '0644'
+      become: yes
 
     - name: Add CSV header if file is empty
       ansible.builtin.shell: |
-        if [ ! -s {{ central_csv_file }} ]; then
-          echo "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" > {{ central_csv_file }}
+        if [ ! -s {{ local_csv_file }} ]; then
+          echo "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" > {{ local_csv_file }}
         fi
-      delegate_to: localhost
-      run_once: true
+      args:
+        executable: /bin/bash
+      become: yes
 
-    - name: Append update log to central CSV
+    - name: Append update log to local CSV
       ansible.builtin.lineinfile:
-        path: "{{ central_csv_file }}"
+        path: "{{ local_csv_file }}"
         line: "{{ update_log_line }}"
         create: yes
         insertafter: EOF
-      delegate_to: localhost
+      become: yes
