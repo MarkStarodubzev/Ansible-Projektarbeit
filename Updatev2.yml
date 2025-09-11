@@ -4,53 +4,59 @@
   gather_facts: yes
 
   vars:
-    update_log_line: "{{ ansible_date_time.date }} {{ ansible_date_time.time }}," 
-                     "{{ inventory_hostname }},{{ ansible_distribution }} {{ ansible_distribution_version }}," 
-                     "{{ update_type }},{{ update_status }},{{ reboot_required | default('nein') }}"
+    update_log_line: "{{ ansible_date_time.date }} {{ ansible_date_time.time }},{{ inventory_hostname }},{{ ansible_distribution }} {{ ansible_distribution_version }},{{ update_type }},{{ update_status }},{{ reboot_required | default('nein') }}"
 
   tasks:
     # --------------------------
-    # Linux Updates
+    # Linux: APT
     # --------------------------
     - name: Update APT-based Linux systems
       ansible.builtin.apt:
-        update_cache: yes
         upgrade: dist
+        update_cache: yes
       register: apt_result
-      when: ansible_os_family == "Debian"
-      vars:
+      when: ansible_pkg_mgr == "apt"
+      become: yes
+
+    - name: Set log vars for APT
+      set_fact:
         update_type: "APT"
-        update_status: "{{ 'OK' if apt_result is succeeded else 'Fehler' }}"
+        update_status: "{{ 'changed' if apt_result.changed else 'ok' }}"
+      when: ansible_pkg_mgr == "apt"
 
-    - name: Update YUM-based Linux systems
-      ansible.builtin.yum:
-        name: '*'
-        state: latest
-      register: yum_result
-      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int < 37
-      vars:
-        update_type: "YUM"
-        update_status: "{{ 'OK' if yum_result is succeeded else 'Fehler' }}"
-
-    - name: Update DNF-based Linux systems
+    # --------------------------
+    # Linux: DNF / YUM
+    # --------------------------
+    - name: Update YUM/DNF-based Linux systems
       ansible.builtin.dnf:
-        name: '*'
+        name: "*"
         state: latest
       register: dnf_result
-      when: ansible_os_family == "RedHat" and ansible_distribution_major_version | int >= 37
-      vars:
-        update_type: "DNF"
-        update_status: "{{ 'OK' if dnf_result is succeeded else 'Fehler' }}"
+      when: ansible_pkg_mgr in ["dnf", "yum"]
+      become: yes
 
+    - name: Set log vars for DNF/YUM
+      set_fact:
+        update_type: "DNF/YUM"
+        update_status: "{{ 'changed' if dnf_result.changed else 'ok' }}"
+      when: ansible_pkg_mgr in ["dnf", "yum"]
+
+    # --------------------------
+    # Linux: Zypper
+    # --------------------------
     - name: Update Zypper-based Linux systems
       community.general.zypper:
-        name: '*'
+        name: "*"
         state: latest
       register: zypper_result
-      when: ansible_os_family == "Suse"
-      vars:
+      when: ansible_pkg_mgr == "zypper"
+      become: yes
+
+    - name: Set log vars for Zypper
+      set_fact:
         update_type: "Zypper"
-        update_status: "{{ 'OK' if zypper_result is succeeded else 'Fehler' }}"
+        update_status: "{{ 'changed' if zypper_result.changed else 'ok' }}"
+      when: ansible_pkg_mgr == "zypper"
 
     # --------------------------
     # Windows Updates
@@ -61,15 +67,18 @@
           - SecurityUpdates
           - CriticalUpdates
           - UpdateRollups
-      register: win_updates
+      register: win_update_result
       when: ansible_os_family == "Windows"
-      vars:
+
+    - name: Set log vars for Windows
+      set_fact:
         update_type: "WindowsUpdate"
-        update_status: "{{ 'OK' if win_updates is succeeded else 'Fehler' }}"
-        reboot_required: "{{ 'ja' if win_updates.reboot_required | default(false) else 'nein' }}"
+        update_status: "{{ 'changed' if (win_update_result.updates | length > 0) else 'ok' }}"
+        reboot_required: "{{ 'ja' if win_update_result.reboot_required else 'nein' }}"
+      when: ansible_os_family == "Windows"
 
     # --------------------------
-    # Logging (Linux)
+    # Local log file handling (Linux)
     # --------------------------
     - name: Ensure local CSV exists (Linux)
       ansible.builtin.file:
@@ -99,7 +108,7 @@
       when: ansible_os_family != "Windows"
 
     # --------------------------
-    # Logging (Windows)
+    # Local log file handling (Windows)
     # --------------------------
     - name: Ensure local CSV exists (Windows)
       win_file:
