@@ -38,7 +38,6 @@
     # --------------------------
     - name: Update YUM/DNF-based Linux systems
       ansible.builtin.dnf:
-        name: "*"
         state: latest
       register: dnf_result
       when:
