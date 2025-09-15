@@ -43,7 +43,7 @@
       when:
         - ansible_os_family != "Windows"
         - ansible_pkg_mgr is defined
-        - ansible_pkg_mgr == "dnf", "yum"
+        - ansible_pkg_mgr = "dnf"
       become: yes
 
     - name: Set log vars for DNF/YUM
