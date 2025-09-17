@@ -80,6 +80,15 @@
     # --------------------------
     # Windows Updates
     # --------------------------
+    - name: Check for available updates
+      win_updates:
+        category_names:
+          - SecurityUpdates
+          - CriticalUpdates
+          - UpdateRollups
+        state: searched
+      register: win_updates_result
+    
     - name: Install Windows updates
       win_updates:
         category_names:
