@@ -33,27 +33,28 @@
         - ansible_pkg_mgr is defined
         - ansible_pkg_mgr == "apt"
 
+     # --------------------------
+    # Linux: DNF5
     # --------------------------
-    # Linux: DNF / YUM
-    # --------------------------
-    - name: Update YUM/DNF-based Linux systems
-      ansible.builtin.dnf:
+    - name: Update DNF5-based Linux systems
+      ansible.builtin.dnf5:
+        name: "*"
         state: latest
-      register: dnf_result
+      register: dnf5_result
       when:
         - ansible_os_family != "Windows"
         - ansible_pkg_mgr is defined
-        - ansible_pkg_mgr == "dnf"
+        - ansible_pkg_mgr == "dnf5"
       become: yes
 
-    - name: Set log vars for DNF/YUM
+    - name: Set log vars for DNF5
       set_fact:
-        update_type: "DNF/YUM"
-        update_status: "{{ 'changed' if dnf_result.changed else 'ok' }}"
+        update_type: "DNF5"
+        update_status: "{{ 'changed' if dnf5_result.changed else 'ok' }}"
       when:
         - ansible_os_family != "Windows"
         - ansible_pkg_mgr is defined
-        - ansible_pkg_mgr == "dnf"
+        - ansible_pkg_mgr == "dnf5"
 
     # --------------------------
     # Linux: Zypper
