@@ -34,12 +34,10 @@
         - ansible_pkg_mgr == "apt"
 
     # --------------------------
-    # Linux: DNF5 (Fedora 42 / RHEL 10+)
+    # Linux: DNF5 via shell (Fedora 42 / RHEL 10+)
     # --------------------------
-    - name: Update DNF5-based Linux systems
-      ansible.builtin.dnf5:
-        name: "*"
-        state: latest
+    - name: Update all packages via DNF5
+      ansible.builtin.shell: dnf -y upgrade
       register: dnf5_result
       when:
         - ansible_os_family != "Windows"
@@ -50,11 +48,12 @@
     - name: Set log vars for DNF5
       set_fact:
         update_type: "DNF5"
-        update_status: "{{ 'changed' if dnf5_result.changed else 'ok' }}"
+        update_status: "{{ 'changed' if dnf5_result.rc == 0 else 'failed' }}"
       when:
         - ansible_os_family != "Windows"
         - ansible_pkg_mgr is defined
         - ansible_pkg_mgr == "dnf5"
+
     # --------------------------
     # Linux: Zypper
     # --------------------------
