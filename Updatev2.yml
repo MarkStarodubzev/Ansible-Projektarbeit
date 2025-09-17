@@ -99,6 +99,7 @@
       register: win_update_result
       when: ansible_os_family == "Windows"
       reboot: yes
+      reboot_timeout: 200
 
     - name: Set log vars for Windows
       set_fact:
