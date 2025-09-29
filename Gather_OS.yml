@@ -1,0 +1,20 @@
+---
+- name: Sammle OS-Infos von Linux-Hosts
+  hosts: linux
+  gather_facts: yes
+  tasks:
+    - name: Zeige Linux Distribution
+      debug:
+        msg: "{{ inventory_hostname }} läuft auf {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+- name: Sammle OS-Infos von Windows-Hosts
+  hosts: windows
+  gather_facts: no
+  tasks:
+    - name: Windows Systeminfo sammeln
+      win_system_info:
+      register: win_info
+
+    - name: Zeige Windows OS Info
+      debug:
+        msg: "{{ inventory_hostname }} läuft auf {{ win_info.os_name }} (Version {{ win_info.os_version }})"
