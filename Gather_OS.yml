@@ -12,7 +12,7 @@
   gather_facts: no
   tasks:
     - name: Windows Systeminfo sammeln
-      win_system_info:
+      ansible.windows.win_system_info:
       register: win_info
 
     - name: Zeige Windows OS Info
