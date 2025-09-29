@@ -21,7 +21,7 @@
       win_shell: Get-Uptime
       register: windows_uptime
       ignore_errors: yes
-      when: ansible_system is defined and ansible_system == "Windows"
+      when: ansible_connection == "winrm"
 
     - name: Windows-Uptime anzeigen
       debug:
