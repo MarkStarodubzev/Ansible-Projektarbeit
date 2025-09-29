@@ -1,0 +1,27 @@
+---
+- name: Uptime aller Hosts abfragen
+  hosts: all
+  gather_facts: no
+  tasks:
+
+    - name: Linux-Uptime
+      when: ansible_system is not defined or ansible_system != "Windows"
+      command: uptime
+      register: linux_uptime
+      ignore_errors: yes
+
+    - name: Zeige Linux-Uptime
+      when: linux_uptime is defined
+      debug:
+        msg: "{{ inventory_hostname }}: {{ linux_uptime.stdout }}"
+
+    - name: Windows-Uptime
+      when: ansible_system is defined and ansible_system == "Windows"
+      win_shell: Get-Uptime
+      register: windows_uptime
+      ignore_errors: yes
+
+    - name: Zeige Windows-Uptime
+      when: windows_uptime is defined
+      debug:
+        msg: "{{ inventory_hostname }}: {{ windows_uptime.stdout }}"
