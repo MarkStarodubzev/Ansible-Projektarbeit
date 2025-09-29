@@ -1,20 +1,8 @@
 ---
-- name: Sammle OS-Infos von Linux-Hosts
-  hosts: linux
+- name: Zeige OS-Info aller Hosts
+  hosts: all
   gather_facts: yes
   tasks:
-    - name: Zeige Linux Distribution
+    - name: OS-Info anzeigen
       debug:
-        msg: "{{ inventory_hostname }} läuft auf {{ ansible_distribution }} {{ ansible_distribution_version }}"
-
-- name: Sammle OS-Infos von Windows-Hosts
-  hosts: windows
-  gather_facts: no
-  tasks:
-    - name: Windows Systeminfo sammeln
-      ansible.windows.win_system_info:
-      register: win_info
-
-    - name: Zeige Windows OS Info
-      debug:
-        msg: "{{ inventory_hostname }} läuft auf {{ win_info.os_name }} (Version {{ win_info.os_version }})"
+        msg: "{{ inventory_hostname }}: {{ ansible_distribution | default(ansible_system) }} {{ ansible_distribution_version | default(ansible_os_family) }}"
