@@ -1,0 +1,26 @@
+---
+- name: Uptime für alle Hosts abfragen
+  hosts: all
+  gather_facts: yes  # wichtig, damit wir Facts für Linux nutzen können
+  tasks:
+
+    - name: Linux Uptime
+      when: ansible_os_family != "Windows"
+      shell: "uptime -p"
+      register: linux_uptime
+
+    - name: Zeige Linux Uptime
+      when: ansible_os_family != "Windows"
+      debug:
+        msg: "{{ inventory_hostname }}: {{ linux_uptime.stdout }}"
+
+    - name: Windows Uptime (System Boot Time)
+      when: ansible_os_family == "Windows"
+      win_shell: |
+        (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
+      register: windows_uptime
+
+    - name: Zeige Windows Uptime
+      when: ansible_os_family == "Windows"
+      debug:
+        msg: "{{ inventory_hostname }}: {{ windows_uptime.stdout }}"
