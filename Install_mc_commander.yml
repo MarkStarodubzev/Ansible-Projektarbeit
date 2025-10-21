@@ -1,13 +1,15 @@
 
-hosts: linux
-gather_facts: no
-become: true
+- hosts: linux
+  become: true
+  gather_facts: no
+  tasks:
 
-- name: Install mc
-  apt:
-    name:
-      - mc
-    state: latest
-    update_cache: yes
+
+  - name: Install mc
+    apt:
+      name:
+        - mc
+      state: latest
+      update_cache: yes
         
           
