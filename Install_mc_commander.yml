@@ -1,0 +1,14 @@
+---
+- name: Install mc commander
+  host: linux
+  gather_facts: no
+  become: true
+
+    - name: Install mc
+      apt:
+        name:
+          - mc
+        state: latest
+        update_cache: yes
+        
+          
