@@ -1,0 +1,28 @@
+---
+- name: Test-Playbook für Loki / Grafana
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    # Wenn du beim Aufruf simulate_failure=true setzt,
+    # wird das Playbook absichtlich mit FAIL enden.
+    simulate_failure: false
+
+  tasks:
+    - name: Schreibe Start-Marker ins Log
+      ansible.builtin.debug:
+        msg: "ALERT: TEST PLAYBOOK STARTED"
+
+    - name: Einfacher Beispiel-Task
+      ansible.builtin.command: /bin/echo "Hallo von Ansible auf {{ inventory_hostname }}"
+
+    - name: Optional einen Fehler erzeugen
+      ansible.builtin.fail:
+        msg: "ALERT: TEST PLAYBOOK FAILED (absichtlich ausgelöst)"
+      when: simulate_failure | bool
+
+    - name: Schreibe Erfolgs-Marker ins Log
+      ansible.builtin.debug:
+        msg: "ALERT: TEST PLAYBOOK SUCCESSFUL"
+      when: not simulate_failure | bool
