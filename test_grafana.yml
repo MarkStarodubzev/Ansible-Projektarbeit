@@ -7,7 +7,7 @@
   vars:
     # Wenn du beim Aufruf simulate_failure=true setzt,
     # wird das Playbook absichtlich mit FAIL enden.
-    simulate_failure: yes
+    simulate_failure: true
 
   tasks:
     - name: Schreibe Start-Marker ins Log

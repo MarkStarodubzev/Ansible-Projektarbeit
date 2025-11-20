@@ -1,0 +1,213 @@
+2025-11-19 13:20:33,097 p=13322 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:20:33,127 p=13322 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:20:33,200 p=13322 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:20:33,208 p=13322 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:20:34,196 p=13322 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-19 13:20:34,213 p=13322 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:20:34,313 p=13322 u=ansibleserver n=ansible | skipping: [localhost]
+2025-11-19 13:20:34,319 p=13322 u=ansibleserver n=ansible | TASK [Schreibe Erfolgs-Marker ins Log] *****************************************************************************************************************************************
+2025-11-19 13:20:34,543 p=13322 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK SUCCESSFUL'
+2025-11-19 13:20:34,573 p=13322 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:20:34,574 p=13322 u=ansibleserver n=ansible | localhost                  : ok=3    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-19 13:21:43,239 p=13418 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:21:43,261 p=13418 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:21:43,367 p=13418 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:21:43,371 p=13418 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:21:44,473 p=13418 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-19 13:21:44,477 p=13418 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:21:44,763 p=13418 u=ansibleserver n=ansible | skipping: [localhost]
+2025-11-19 13:21:44,766 p=13418 u=ansibleserver n=ansible | TASK [Schreibe Erfolgs-Marker ins Log] *****************************************************************************************************************************************
+2025-11-19 13:21:44,849 p=13418 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK SUCCESSFUL'
+2025-11-19 13:21:44,859 p=13418 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:21:44,860 p=13418 u=ansibleserver n=ansible | localhost                  : ok=3    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-19 13:26:16,788 p=13633 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:26:16,808 p=13633 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:26:16,848 p=13633 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:26:16,851 p=13633 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:26:17,884 p=13633 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-19 13:26:17,888 p=13633 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:26:18,016 p=13633 u=ansibleserver n=ansible | skipping: [localhost]
+2025-11-19 13:26:18,037 p=13633 u=ansibleserver n=ansible | TASK [Schreibe Erfolgs-Marker ins Log] *****************************************************************************************************************************************
+2025-11-19 13:26:18,125 p=13633 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK SUCCESSFUL'
+2025-11-19 13:26:18,130 p=13633 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:26:18,130 p=13633 u=ansibleserver n=ansible | localhost                  : ok=3    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-19 13:27:18,827 p=13855 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:27:18,857 p=13855 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:27:18,917 p=13855 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:27:18,925 p=13855 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:27:20,290 p=13855 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-19 13:27:20,293 p=13855 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:27:20,411 p=13855 u=ansibleserver n=ansible | fatal: [localhost]: FAILED! => changed=false 
+  msg: 'ALERT: TEST PLAYBOOK FAILED (absichtlich ausgelöst)'
+2025-11-19 13:27:20,413 p=13855 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:27:20,413 p=13855 u=ansibleserver n=ansible | localhost                  : ok=2    changed=1    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+2025-11-19 13:28:10,130 p=13964 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:28:10,146 p=13964 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:28:10,367 p=13964 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:28:10,475 p=13964 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:28:11,587 p=13964 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-19 13:28:11,597 p=13964 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:28:11,710 p=13964 u=ansibleserver n=ansible | fatal: [localhost]: FAILED! => changed=false 
+  msg: 'ALERT: TEST PLAYBOOK FAILED (absichtlich ausgelöst)'
+2025-11-19 13:28:11,721 p=13964 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:28:11,722 p=13964 u=ansibleserver n=ansible | localhost                  : ok=2    changed=1    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+2025-11-19 13:30:02,033 p=14045 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:30:02,063 p=14045 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:30:02,102 p=14045 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:30:02,105 p=14045 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:30:03,122 p=14045 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-19 13:30:03,125 p=14045 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:30:03,209 p=14045 u=ansibleserver n=ansible | skipping: [localhost]
+2025-11-19 13:30:03,212 p=14045 u=ansibleserver n=ansible | TASK [Schreibe Erfolgs-Marker ins Log] *****************************************************************************************************************************************
+2025-11-19 13:30:03,397 p=14045 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK SUCCESSFUL'
+2025-11-19 13:30:03,420 p=14045 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:30:03,422 p=14045 u=ansibleserver n=ansible | localhost                  : ok=3    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-19 13:31:00,866 p=14131 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:31:00,900 p=14131 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:31:00,960 p=14131 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:31:00,964 p=14131 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:31:02,399 p=14131 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-19 13:31:02,401 p=14131 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:31:02,511 p=14131 u=ansibleserver n=ansible | skipping: [localhost]
+2025-11-19 13:31:02,539 p=14131 u=ansibleserver n=ansible | TASK [Schreibe Erfolgs-Marker ins Log] *****************************************************************************************************************************************
+2025-11-19 13:31:02,651 p=14131 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK SUCCESSFUL'
+2025-11-19 13:31:02,665 p=14131 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:31:02,666 p=14131 u=ansibleserver n=ansible | localhost                  : ok=3    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-19 13:33:36,926 p=14263 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:33:36,948 p=14263 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:33:37,042 p=14263 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:33:37,051 p=14263 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:33:38,456 p=14263 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-19 13:33:38,467 p=14263 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:33:38,558 p=14263 u=ansibleserver n=ansible | skipping: [localhost]
+2025-11-19 13:33:38,562 p=14263 u=ansibleserver n=ansible | TASK [Schreibe Erfolgs-Marker ins Log] *****************************************************************************************************************************************
+2025-11-19 13:33:38,671 p=14263 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK SUCCESSFUL'
+2025-11-19 13:33:38,676 p=14263 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:33:38,677 p=14263 u=ansibleserver n=ansible | localhost                  : ok=3    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-19 13:33:51,000 p=14357 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:33:51,037 p=14357 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:33:51,096 p=14357 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:33:51,099 p=14357 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:33:52,472 p=14357 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-19 13:33:52,475 p=14357 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:33:52,582 p=14357 u=ansibleserver n=ansible | skipping: [localhost]
+2025-11-19 13:33:52,597 p=14357 u=ansibleserver n=ansible | TASK [Schreibe Erfolgs-Marker ins Log] *****************************************************************************************************************************************
+2025-11-19 13:33:52,715 p=14357 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK SUCCESSFUL'
+2025-11-19 13:33:52,722 p=14357 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:33:52,723 p=14357 u=ansibleserver n=ansible | localhost                  : ok=3    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-19 13:34:03,594 p=14435 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:34:03,627 p=14435 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:34:03,680 p=14435 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:34:03,696 p=14435 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:34:04,733 p=14435 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-19 13:34:04,741 p=14435 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:34:04,840 p=14435 u=ansibleserver n=ansible | fatal: [localhost]: FAILED! => changed=false 
+  msg: 'ALERT: TEST PLAYBOOK FAILED (absichtlich ausgelöst)'
+2025-11-19 13:34:04,841 p=14435 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:34:04,841 p=14435 u=ansibleserver n=ansible | localhost                  : ok=2    changed=1    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+2025-11-19 13:34:12,023 p=14512 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:34:12,052 p=14512 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:34:12,114 p=14512 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:34:12,125 p=14512 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:34:13,470 p=14512 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-19 13:34:13,484 p=14512 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:34:13,588 p=14512 u=ansibleserver n=ansible | fatal: [localhost]: FAILED! => changed=false 
+  msg: 'ALERT: TEST PLAYBOOK FAILED (absichtlich ausgelöst)'
+2025-11-19 13:34:13,589 p=14512 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:34:13,590 p=14512 u=ansibleserver n=ansible | localhost                  : ok=2    changed=1    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+2025-11-19 13:37:28,992 p=14716 u=ansibleserver n=ansible | ansible-playbook [core 2.16.3]
+  config file = /home/ansibleserver/Ansible-Projektarbeit/ansible.cfg
+  configured module search path = ['/home/ansibleserver/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python3/dist-packages/ansible
+  ansible collection location = /home/ansibleserver/.ansible/collections:/usr/share/ansible/collections
+  executable location = /usr/bin/ansible-playbook
+  python version = 3.12.3 (main, Aug 14 2025, 17:47:21) [GCC 13.3.0] (/usr/bin/python3)
+  jinja version = 3.1.2
+  libyaml = True
+2025-11-19 13:37:28,995 p=14716 u=ansibleserver n=ansible | Using /home/ansibleserver/Ansible-Projektarbeit/ansible.cfg as config file
+2025-11-19 13:37:29,243 p=14716 u=ansibleserver n=ansible | Parsed localhost, inventory source with host_list plugin
+2025-11-19 13:37:29,726 p=14716 u=ansibleserver n=ansible | redirecting (type: callback) ansible.builtin.yaml to community.general.yaml
+2025-11-19 13:37:29,755 p=14716 u=ansibleserver n=ansible | redirecting (type: callback) ansible.builtin.yaml to community.general.yaml
+2025-11-19 13:37:29,768 p=14716 u=ansibleserver n=ansible | Skipping callback 'default', as we already have a stdout callback.
+2025-11-19 13:37:29,768 p=14716 u=ansibleserver n=ansible | Skipping callback 'minimal', as we already have a stdout callback.
+2025-11-19 13:37:29,768 p=14716 u=ansibleserver n=ansible | Skipping callback 'oneline', as we already have a stdout callback.
+2025-11-19 13:37:29,769 p=14716 u=ansibleserver n=ansible | PLAYBOOK: test_grafana.yml *****************************************************************************************************************************************************
+2025-11-19 13:37:29,769 p=14716 u=ansibleserver n=ansible | 1 plays in test_grafana.yml
+2025-11-19 13:37:29,772 p=14716 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ****************************************************************************************************************************************
+2025-11-19 13:37:29,812 p=14716 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] *******************************************************************************************************************************************
+2025-11-19 13:37:29,872 p=14716 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-19 13:37:29,876 p=14716 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *************************************************************************************************************************************************
+2025-11-19 13:37:29,935 p=14716 u=ansibleserver n=ansible | <localhost> ESTABLISH LOCAL CONNECTION FOR USER: ansibleserver
+2025-11-19 13:37:29,936 p=14716 u=ansibleserver n=ansible | <localhost> EXEC /bin/sh -c 'echo ~ansibleserver && sleep 0'
+2025-11-19 13:37:29,970 p=14716 u=ansibleserver n=ansible | <localhost> EXEC /bin/sh -c '( umask 77 && mkdir -p "` echo /home/ansibleserver/.ansible/tmp `"&& mkdir "` echo /home/ansibleserver/.ansible/tmp/ansible-tmp-1763559449.9703019-14734-133619717146236 `" && echo ansible-tmp-1763559449.9703019-14734-133619717146236="` echo /home/ansibleserver/.ansible/tmp/ansible-tmp-1763559449.9703019-14734-133619717146236 `" ) && sleep 0'
+2025-11-19 13:37:30,264 p=14716 u=ansibleserver n=ansible | <localhost> Attempting python interpreter discovery
+2025-11-19 13:37:30,265 p=14716 u=ansibleserver n=ansible | <localhost> EXEC /bin/sh -c 'echo PLATFORM; uname; echo FOUND; command -v '"'"'python3.12'"'"'; command -v '"'"'python3.11'"'"'; command -v '"'"'python3.10'"'"'; command -v '"'"'python3.9'"'"'; command -v '"'"'python3.8'"'"'; command -v '"'"'python3.7'"'"'; command -v '"'"'python3.6'"'"'; command -v '"'"'/usr/bin/python3'"'"'; command -v '"'"'/usr/libexec/platform-python'"'"'; command -v '"'"'python2.7'"'"'; command -v '"'"'/usr/bin/python'"'"'; command -v '"'"'python'"'"'; echo ENDFOUND && sleep 0'
+2025-11-19 13:37:30,334 p=14716 u=ansibleserver n=ansible | <localhost> EXEC /bin/sh -c '/usr/bin/python3.12 && sleep 0'
+2025-11-19 13:37:30,579 p=14716 u=ansibleserver n=ansible | Using module file /usr/lib/python3/dist-packages/ansible/modules/command.py
+2025-11-19 13:37:30,580 p=14716 u=ansibleserver n=ansible | <localhost> PUT /home/ansibleserver/.ansible/tmp/ansible-local-14716504b5u2q/tmpyxfhxx9x TO /home/ansibleserver/.ansible/tmp/ansible-tmp-1763559449.9703019-14734-133619717146236/AnsiballZ_command.py
+2025-11-19 13:37:30,580 p=14716 u=ansibleserver n=ansible | <localhost> EXEC /bin/sh -c 'chmod u+x /home/ansibleserver/.ansible/tmp/ansible-tmp-1763559449.9703019-14734-133619717146236/ /home/ansibleserver/.ansible/tmp/ansible-tmp-1763559449.9703019-14734-133619717146236/AnsiballZ_command.py && sleep 0'
+2025-11-19 13:37:30,598 p=14716 u=ansibleserver n=ansible | <localhost> EXEC /bin/sh -c '/usr/bin/python3 /home/ansibleserver/.ansible/tmp/ansible-tmp-1763559449.9703019-14734-133619717146236/AnsiballZ_command.py && sleep 0'
+2025-11-19 13:37:30,998 p=14716 u=ansibleserver n=ansible | <localhost> EXEC /bin/sh -c 'rm -f -r /home/ansibleserver/.ansible/tmp/ansible-tmp-1763559449.9703019-14734-133619717146236/ > /dev/null 2>&1 && sleep 0'
+2025-11-19 13:37:31,040 p=14716 u=ansibleserver n=ansible | changed: [localhost] => changed=true 
+  ansible_facts:
+    discovered_interpreter_python: /usr/bin/python3
+  cmd:
+  - /bin/echo
+  - Hallo von Ansible auf localhost
+  delta: '0:00:00.017190'
+  end: '2025-11-19 13:37:30.956125'
+  invocation:
+    module_args:
+      _raw_params: /bin/echo "Hallo von Ansible auf localhost"
+      _uses_shell: false
+      argv: null
+      chdir: null
+      creates: null
+      executable: null
+      expand_argument_vars: true
+      removes: null
+      stdin: null
+      stdin_add_newline: true
+      strip_empty_ends: true
+  msg: ''
+  rc: 0
+  start: '2025-11-19 13:37:30.938935'
+  stderr: ''
+  stderr_lines: <omitted>
+  stdout: Hallo von Ansible auf localhost
+  stdout_lines: <omitted>
+2025-11-19 13:37:31,049 p=14716 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] ******************************************************************************************************************************************
+2025-11-19 13:37:31,175 p=14716 u=ansibleserver n=ansible | fatal: [localhost]: FAILED! => changed=false 
+  msg: 'ALERT: TEST PLAYBOOK FAILED (absichtlich ausgelöst)'
+2025-11-19 13:37:31,182 p=14716 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-19 13:37:31,182 p=14716 u=ansibleserver n=ansible | localhost                  : ok=2    changed=1    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+2025-11-20 08:22:20,106 p=11724 u=ansibleserver n=ansible | PLAY [Test-Playbook für Loki / Grafana] ************************************************************************************************************************
+2025-11-20 08:22:20,133 p=11724 u=ansibleserver n=ansible | TASK [Schreibe Start-Marker ins Log] ***************************************************************************************************************************
+2025-11-20 08:22:20,157 p=11724 u=ansibleserver n=ansible | ok: [localhost] => 
+  msg: 'ALERT: TEST PLAYBOOK STARTED'
+2025-11-20 08:22:20,167 p=11724 u=ansibleserver n=ansible | TASK [Einfacher Beispiel-Task] *********************************************************************************************************************************
+2025-11-20 08:22:20,456 p=11724 u=ansibleserver n=ansible | changed: [localhost]
+2025-11-20 08:22:20,464 p=11724 u=ansibleserver n=ansible | TASK [Optional einen Fehler erzeugen] **************************************************************************************************************************
+2025-11-20 08:22:20,521 p=11724 u=ansibleserver n=ansible | fatal: [localhost]: FAILED! => changed=false 
+  msg: 'ALERT: TEST PLAYBOOK FAILED (absichtlich ausgelöst)'
+2025-11-20 08:22:20,526 p=11724 u=ansibleserver n=ansible | PLAY RECAP *****************************************************************************************************************************************************
+2025-11-20 08:22:20,530 p=11724 u=ansibleserver n=ansible | localhost                  : ok=2    changed=1    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
