@@ -9,7 +9,16 @@ k3s-node2 ansible_host=192.168.10.116 ansible_user=ansibleubuntu
 192.168.56.112 ansible_user=ansiblefedora
 192.168.56.116 ansible_user=ansibleubuntu
 
+
 [linux:vars]
+ansible_become=true
+ansible_become_method=sudo
+
+[k3s_master:vars]
+ansible_become=true
+ansible_become_method=sudo
+
+[k3s_nodes:vars]
 ansible_become=true
 ansible_become_method=sudo
 

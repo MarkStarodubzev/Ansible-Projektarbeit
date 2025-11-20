@@ -211,3 +211,238 @@
   msg: 'ALERT: TEST PLAYBOOK FAILED (absichtlich ausgelöst)'
 2025-11-20 08:22:20,526 p=11724 u=ansibleserver n=ansible | PLAY RECAP *****************************************************************************************************************************************************
 2025-11-20 08:22:20,530 p=11724 u=ansibleserver n=ansible | localhost                  : ok=2    changed=1    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+2025-11-20 09:39:53,055 p=13134 u=ansibleserver n=ansible | PLAY [Install k3s server (master)] *********************************************************************************************************************************************
+2025-11-20 09:39:53,099 p=13134 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 09:40:02,341 p=13134 u=ansibleserver n=ansible | fatal: [k3s-master]: FAILED! => 
+  msg: Missing sudo password
+2025-11-20 09:40:02,343 p=13134 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-20 09:40:02,344 p=13134 u=ansibleserver n=ansible | k3s-master                 : ok=0    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+2025-11-20 09:41:17,295 p=13519 u=ansibleserver n=ansible | Reading ciphertext input from stdin
+2025-11-20 09:42:58,142 p=13519 u=ansibleserver n=ansible |  [ERROR]: User interrupted execution
+
+2025-11-20 09:43:19,012 p=13614 u=ansibleserver n=ansible | Reading plaintext input from stdin
+2025-11-20 09:43:54,566 p=13614 u=ansibleserver n=ansible |  [ERROR]: User interrupted execution
+
+2025-11-20 09:46:46,036 p=14161 u=ansibleserver n=ansible | PLAY [Install k3s server (master)] *********************************************************************************************************************************************
+2025-11-20 09:46:46,055 p=14161 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 09:46:49,519 p=14161 u=ansibleserver n=ansible | fatal: [k3s-master]: FAILED! => 
+  msg: Missing sudo password
+2025-11-20 09:46:49,521 p=14161 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-20 09:46:49,522 p=14161 u=ansibleserver n=ansible | k3s-master                 : ok=0    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+2025-11-20 09:47:38,441 p=14371 u=ansibleserver n=ansible | PLAY [Install k3s server (master)] *********************************************************************************************************************************************
+2025-11-20 09:47:38,522 p=14371 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 09:47:43,055 p=14371 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 09:47:43,158 p=14371 u=ansibleserver n=ansible | TASK [Disable swap (runtime)] **************************************************************************************************************************************************
+2025-11-20 09:47:57,997 p=14371 u=ansibleserver n=ansible | changed: [k3s-master]
+2025-11-20 09:47:58,017 p=14371 u=ansibleserver n=ansible | TASK [Disable swap in fstab (permanent)] ***************************************************************************************************************************************
+2025-11-20 09:47:59,260 p=14371 u=ansibleserver n=ansible | changed: [k3s-master]
+2025-11-20 09:47:59,321 p=14371 u=ansibleserver n=ansible | TASK [Install k3s server] ******************************************************************************************************************************************************
+2025-11-20 09:49:46,714 p=14371 u=ansibleserver n=ansible | changed: [k3s-master]
+2025-11-20 09:49:46,835 p=14371 u=ansibleserver n=ansible | TASK [Read k3s node token] *****************************************************************************************************************************************************
+2025-11-20 09:49:53,169 p=14371 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 09:49:53,317 p=14371 u=ansibleserver n=ansible | TASK [Set k3s_node_token fact] *************************************************************************************************************************************************
+2025-11-20 09:49:54,116 p=14371 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 09:49:54,262 p=14371 u=ansibleserver n=ansible | TASK [Copy kubeconfig to control machine] **************************************************************************************************************************************
+2025-11-20 09:49:58,640 p=14371 u=ansibleserver n=ansible | changed: [k3s-master]
+2025-11-20 09:49:58,726 p=14371 u=ansibleserver n=ansible | PLAY [Install k3s agents (worker nodes)] ***************************************************************************************************************************************
+2025-11-20 09:49:58,738 p=14371 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 09:50:09,399 p=14371 u=ansibleserver n=ansible | fatal: [k3s-node2]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.116 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 09:50:09,410 p=14371 u=ansibleserver n=ansible | fatal: [k3s-node1]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.112 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 09:50:09,489 p=14371 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-20 09:50:09,490 p=14371 u=ansibleserver n=ansible | k3s-master                 : ok=7    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 09:50:09,490 p=14371 u=ansibleserver n=ansible | k3s-node1                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 09:50:09,490 p=14371 u=ansibleserver n=ansible | k3s-node2                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 09:52:09,013 p=15500 u=ansibleserver n=ansible | PLAY [Install k3s server (master)] *********************************************************************************************************************************************
+2025-11-20 09:52:09,147 p=15500 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 09:52:23,055 p=15500 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 09:52:23,166 p=15500 u=ansibleserver n=ansible | TASK [Disable swap (runtime)] **************************************************************************************************************************************************
+2025-11-20 09:52:23,561 p=15500 u=ansibleserver n=ansible | skipping: [k3s-master]
+2025-11-20 09:52:23,629 p=15500 u=ansibleserver n=ansible | TASK [Disable swap in fstab (permanent)] ***************************************************************************************************************************************
+2025-11-20 09:52:27,865 p=15500 u=ansibleserver n=ansible | changed: [k3s-master]
+2025-11-20 09:52:27,908 p=15500 u=ansibleserver n=ansible | TASK [Install k3s server] ******************************************************************************************************************************************************
+2025-11-20 09:52:31,140 p=15500 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 09:52:31,177 p=15500 u=ansibleserver n=ansible | TASK [Read k3s node token] *****************************************************************************************************************************************************
+2025-11-20 09:52:34,492 p=15500 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 09:52:34,582 p=15500 u=ansibleserver n=ansible | TASK [Set k3s_node_token fact] *************************************************************************************************************************************************
+2025-11-20 09:52:35,517 p=15500 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 09:52:35,557 p=15500 u=ansibleserver n=ansible | TASK [Copy kubeconfig to control machine] **************************************************************************************************************************************
+2025-11-20 09:52:37,589 p=15500 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 09:52:37,672 p=15500 u=ansibleserver n=ansible | PLAY [Install k3s agents (worker nodes)] ***************************************************************************************************************************************
+2025-11-20 09:52:37,697 p=15500 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 09:52:47,939 p=15500 u=ansibleserver n=ansible | fatal: [k3s-node1]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.112 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 09:52:47,975 p=15500 u=ansibleserver n=ansible | fatal: [k3s-node2]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.116 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 09:52:47,977 p=15500 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-20 09:52:47,982 p=15500 u=ansibleserver n=ansible | k3s-master                 : ok=6    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-20 09:52:47,983 p=15500 u=ansibleserver n=ansible | k3s-node1                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 09:52:47,983 p=15500 u=ansibleserver n=ansible | k3s-node2                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 10:09:07,766 p=18050 u=ansibleserver n=ansible | PLAY [Ping Linux hosts] ********************************************************************************************************************************************************
+2025-11-20 10:09:07,914 p=18050 u=ansibleserver n=ansible | TASK [Ping Linux (Ansible builtin)] ********************************************************************************************************************************************
+2025-11-20 10:09:13,192 p=18050 u=ansibleserver n=ansible | ok: [192.168.56.116]
+2025-11-20 10:09:13,656 p=18050 u=ansibleserver n=ansible | ok: [192.168.56.112]
+2025-11-20 10:09:13,754 p=18050 u=ansibleserver n=ansible | PLAY [Ping Windows hosts] ******************************************************************************************************************************************************
+2025-11-20 10:09:13,787 p=18050 u=ansibleserver n=ansible | TASK [Ping Windows (win_ping)] *************************************************************************************************************************************************
+2025-11-20 10:09:17,442 p=18050 u=ansibleserver n=ansible | fatal: [192.168.56.115]: UNREACHABLE! => changed=false 
+  msg: 'basic: HTTPConnectionPool(host=''192.168.56.115'', port=5985): Max retries exceeded with url: /wsman (Caused by NewConnectionError(''<urllib3.connection.HTTPConnection object at 0x734fb3e58cb0>: Failed to establish a new connection: [Errno 113] No route to host''))'
+  unreachable: true
+2025-11-20 10:09:17,448 p=18050 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-20 10:09:17,448 p=18050 u=ansibleserver n=ansible | 192.168.56.112             : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 10:09:17,449 p=18050 u=ansibleserver n=ansible | 192.168.56.115             : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 10:09:17,449 p=18050 u=ansibleserver n=ansible | 192.168.56.116             : ok=1    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 10:09:57,168 p=18370 u=ansibleserver n=ansible | PLAY [Install k3s server (master)] *********************************************************************************************************************************************
+2025-11-20 10:09:57,590 p=18370 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 10:10:22,020 p=18370 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:10:22,152 p=18370 u=ansibleserver n=ansible | TASK [Disable swap (runtime)] **************************************************************************************************************************************************
+2025-11-20 10:10:23,054 p=18370 u=ansibleserver n=ansible | skipping: [k3s-master]
+2025-11-20 10:10:23,148 p=18370 u=ansibleserver n=ansible | TASK [Disable swap in fstab (permanent)] ***************************************************************************************************************************************
+2025-11-20 10:10:35,543 p=18370 u=ansibleserver n=ansible | changed: [k3s-master]
+2025-11-20 10:10:35,784 p=18370 u=ansibleserver n=ansible | TASK [Install k3s server] ******************************************************************************************************************************************************
+2025-11-20 10:10:47,909 p=18370 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:10:48,098 p=18370 u=ansibleserver n=ansible | TASK [Read k3s node token] *****************************************************************************************************************************************************
+2025-11-20 10:10:59,673 p=18370 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:10:59,951 p=18370 u=ansibleserver n=ansible | TASK [Set k3s_node_token fact] *************************************************************************************************************************************************
+2025-11-20 10:11:00,629 p=18370 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:11:00,664 p=18370 u=ansibleserver n=ansible | TASK [Copy kubeconfig to control machine] **************************************************************************************************************************************
+2025-11-20 10:11:07,065 p=18370 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:11:07,540 p=18370 u=ansibleserver n=ansible | PLAY [Install k3s agents (worker nodes)] ***************************************************************************************************************************************
+2025-11-20 10:11:07,691 p=18370 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 10:11:18,635 p=18370 u=ansibleserver n=ansible | fatal: [k3s-node2]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.116 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 10:11:18,657 p=18370 u=ansibleserver n=ansible | fatal: [k3s-node1]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.112 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 10:11:18,684 p=18370 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-20 10:11:18,684 p=18370 u=ansibleserver n=ansible | k3s-master                 : ok=6    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-20 10:11:18,684 p=18370 u=ansibleserver n=ansible | k3s-node1                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 10:11:18,684 p=18370 u=ansibleserver n=ansible | k3s-node2                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 10:39:26,471 p=20639 u=ansibleserver n=ansible | PLAY [Install k3s server (master)] *********************************************************************************************************************************************
+2025-11-20 10:39:26,593 p=20639 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 10:39:34,302 p=20639 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:39:34,362 p=20639 u=ansibleserver n=ansible | TASK [Disable swap (runtime)] **************************************************************************************************************************************************
+2025-11-20 10:39:34,598 p=20639 u=ansibleserver n=ansible | skipping: [k3s-master]
+2025-11-20 10:39:34,618 p=20639 u=ansibleserver n=ansible | TASK [Disable swap in fstab (permanent)] ***************************************************************************************************************************************
+2025-11-20 10:39:37,239 p=20639 u=ansibleserver n=ansible | changed: [k3s-master]
+2025-11-20 10:39:37,279 p=20639 u=ansibleserver n=ansible | TASK [Install k3s server] ******************************************************************************************************************************************************
+2025-11-20 10:39:39,892 p=20639 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:39:39,926 p=20639 u=ansibleserver n=ansible | TASK [Read k3s node token] *****************************************************************************************************************************************************
+2025-11-20 10:39:41,834 p=20639 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:39:41,863 p=20639 u=ansibleserver n=ansible | TASK [Set k3s_node_token fact] *************************************************************************************************************************************************
+2025-11-20 10:39:42,486 p=20639 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:39:42,537 p=20639 u=ansibleserver n=ansible | TASK [Copy kubeconfig to control machine] **************************************************************************************************************************************
+2025-11-20 10:39:43,701 p=20639 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:39:43,748 p=20639 u=ansibleserver n=ansible | PLAY [Install k3s agents (worker nodes)] ***************************************************************************************************************************************
+2025-11-20 10:39:43,756 p=20639 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 10:39:53,888 p=20639 u=ansibleserver n=ansible | fatal: [k3s-node1]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.112 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 10:39:53,895 p=20639 u=ansibleserver n=ansible | fatal: [k3s-node2]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.116 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 10:39:53,906 p=20639 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-20 10:39:53,906 p=20639 u=ansibleserver n=ansible | k3s-master                 : ok=6    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-20 10:39:53,909 p=20639 u=ansibleserver n=ansible | k3s-node1                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 10:39:53,911 p=20639 u=ansibleserver n=ansible | k3s-node2                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 10:43:17,131 p=21434 u=ansibleserver n=ansible | PLAY [Install k3s server (master)] *********************************************************************************************************************************************
+2025-11-20 10:43:17,242 p=21434 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 10:43:28,225 p=21434 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:43:28,307 p=21434 u=ansibleserver n=ansible | TASK [Disable swap (runtime)] **************************************************************************************************************************************************
+2025-11-20 10:43:28,593 p=21434 u=ansibleserver n=ansible | skipping: [k3s-master]
+2025-11-20 10:43:28,646 p=21434 u=ansibleserver n=ansible | TASK [Disable swap in fstab (permanent)] ***************************************************************************************************************************************
+2025-11-20 10:43:31,848 p=21434 u=ansibleserver n=ansible | changed: [k3s-master]
+2025-11-20 10:43:31,875 p=21434 u=ansibleserver n=ansible | TASK [Install k3s server] ******************************************************************************************************************************************************
+2025-11-20 10:43:33,521 p=21434 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:43:33,537 p=21434 u=ansibleserver n=ansible | TASK [Read k3s node token] *****************************************************************************************************************************************************
+2025-11-20 10:43:36,349 p=21434 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:43:36,414 p=21434 u=ansibleserver n=ansible | TASK [Set k3s_node_token fact] *************************************************************************************************************************************************
+2025-11-20 10:43:36,674 p=21434 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:43:36,706 p=21434 u=ansibleserver n=ansible | TASK [Copy kubeconfig to control machine] **************************************************************************************************************************************
+2025-11-20 10:43:38,611 p=21434 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:43:38,690 p=21434 u=ansibleserver n=ansible | PLAY [Install k3s agents (worker nodes)] ***************************************************************************************************************************************
+2025-11-20 10:43:38,705 p=21434 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 10:43:49,157 p=21434 u=ansibleserver n=ansible | fatal: [k3s-node2]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.116 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 10:43:49,159 p=21434 u=ansibleserver n=ansible | fatal: [k3s-node1]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.112 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 10:43:49,205 p=21434 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-20 10:43:49,205 p=21434 u=ansibleserver n=ansible | k3s-master                 : ok=6    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-20 10:43:49,206 p=21434 u=ansibleserver n=ansible | k3s-node1                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 10:43:49,209 p=21434 u=ansibleserver n=ansible | k3s-node2                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 10:52:09,570 p=22889 u=ansibleserver n=ansible | PLAY [Install k3s server (master)] *********************************************************************************************************************************************
+2025-11-20 10:52:10,216 p=22889 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 10:57:21,678 p=22889 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 10:57:23,152 p=22889 u=ansibleserver n=ansible | TASK [Disable swap (runtime)] **************************************************************************************************************************************************
+2025-11-20 10:57:59,128 p=22889 u=ansibleserver n=ansible | skipping: [k3s-master]
+2025-11-20 10:57:59,415 p=22889 u=ansibleserver n=ansible | TASK [Disable swap in fstab (permanent)] ***************************************************************************************************************************************
+2025-11-20 10:59:53,594 p=22889 u=ansibleserver n=ansible | changed: [k3s-master]
+2025-11-20 10:59:54,157 p=22889 u=ansibleserver n=ansible | TASK [Install k3s server] ******************************************************************************************************************************************************
+2025-11-20 11:02:21,219 p=22889 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 11:02:22,344 p=22889 u=ansibleserver n=ansible | TASK [Read k3s node token] *****************************************************************************************************************************************************
+2025-11-20 11:07:49,327 p=2448 u=ansibleserver n=ansible | PLAY [Install k3s server (master)] *********************************************************************************************************************************************
+2025-11-20 11:07:49,445 p=2448 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 11:07:55,281 p=2448 u=ansibleserver n=ansible | fatal: [k3s-master]: FAILED! => 
+  msg: Missing sudo password
+2025-11-20 11:07:55,316 p=2448 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-20 11:07:55,316 p=2448 u=ansibleserver n=ansible | k3s-master                 : ok=0    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+2025-11-20 11:09:06,059 p=2654 u=ansibleserver n=ansible | PLAY [Install k3s server (master)] *********************************************************************************************************************************************
+2025-11-20 11:09:06,206 p=2654 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 11:09:13,179 p=2654 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 11:09:13,232 p=2654 u=ansibleserver n=ansible | TASK [Disable swap (runtime)] **************************************************************************************************************************************************
+2025-11-20 11:09:13,420 p=2654 u=ansibleserver n=ansible | skipping: [k3s-master]
+2025-11-20 11:09:13,430 p=2654 u=ansibleserver n=ansible | TASK [Disable swap in fstab (permanent)] ***************************************************************************************************************************************
+2025-11-20 11:09:15,607 p=2654 u=ansibleserver n=ansible | changed: [k3s-master]
+2025-11-20 11:09:15,739 p=2654 u=ansibleserver n=ansible | TASK [Install k3s server] ******************************************************************************************************************************************************
+2025-11-20 11:09:17,211 p=2654 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 11:09:17,227 p=2654 u=ansibleserver n=ansible | TASK [Read k3s node token] *****************************************************************************************************************************************************
+2025-11-20 11:09:18,312 p=2654 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 11:09:18,328 p=2654 u=ansibleserver n=ansible | TASK [Set k3s_node_token fact] *************************************************************************************************************************************************
+2025-11-20 11:09:18,486 p=2654 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 11:09:18,537 p=2654 u=ansibleserver n=ansible | TASK [Copy kubeconfig to control machine] **************************************************************************************************************************************
+2025-11-20 11:09:19,361 p=2654 u=ansibleserver n=ansible | ok: [k3s-master]
+2025-11-20 11:09:19,440 p=2654 u=ansibleserver n=ansible | PLAY [Install k3s agents (worker nodes)] ***************************************************************************************************************************************
+2025-11-20 11:09:19,449 p=2654 u=ansibleserver n=ansible | TASK [Gathering Facts] *********************************************************************************************************************************************************
+2025-11-20 11:09:29,610 p=2654 u=ansibleserver n=ansible | fatal: [k3s-node2]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.116 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 11:09:29,612 p=2654 u=ansibleserver n=ansible | fatal: [k3s-node1]: UNREACHABLE! => changed=false 
+  msg: 'Failed to connect to the host via ssh: ssh: connect to host 192.168.10.112 port 22: Connection timed out'
+  unreachable: true
+2025-11-20 11:09:29,613 p=2654 u=ansibleserver n=ansible | PLAY RECAP *********************************************************************************************************************************************************************
+2025-11-20 11:09:29,617 p=2654 u=ansibleserver n=ansible | k3s-master                 : ok=6    changed=1    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+2025-11-20 11:09:29,617 p=2654 u=ansibleserver n=ansible | k3s-node1                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 11:09:29,618 p=2654 u=ansibleserver n=ansible | k3s-node2                  : ok=0    changed=0    unreachable=1    failed=0    skipped=0    rescued=0    ignored=0   
+2025-11-20 11:11:59,275 p=3260 u=ansibleserver n=ansible | k3s-node1 | FAILED! => {
+    "msg": "to use the 'ssh' connection type with passwords or pkcs11_provider, you must install the sshpass program"
+}
+2025-11-20 11:11:59,305 p=3260 u=ansibleserver n=ansible | k3s-node2 | FAILED! => {
+    "msg": "to use the 'ssh' connection type with passwords or pkcs11_provider, you must install the sshpass program"
+}
+2025-11-20 11:15:01,015 p=4451 u=ansibleserver n=ansible | k3s-node1 | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Failed to connect to the host via ssh: ssh: connect to host 192.168.10.112 port 22: Connection timed out",
+    "unreachable": true
+}
+2025-11-20 11:15:01,032 p=4451 u=ansibleserver n=ansible | k3s-node2 | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Failed to connect to the host via ssh: ssh: connect to host 192.168.10.116 port 22: Connection timed out",
+    "unreachable": true
+}
+2025-11-20 11:16:55,691 p=5051 u=ansibleserver n=ansible | k3s-node2 | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Failed to connect to the host via ssh: ssh: connect to host 192.168.10.116 port 22: Connection timed out",
+    "unreachable": true
+}
+2025-11-20 11:16:55,724 p=5051 u=ansibleserver n=ansible | k3s-node1 | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Failed to connect to the host via ssh: ssh: connect to host 192.168.10.112 port 22: Connection timed out",
+    "unreachable": true
+}
