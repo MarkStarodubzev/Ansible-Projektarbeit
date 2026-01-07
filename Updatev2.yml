@@ -2,10 +2,9 @@
 - name: Update Linux and Windows systems
   hosts: all
   gather_facts: yes
-  become: false  # wichtig: verhindert sudo bei "Gathering Facts"
+  become: false  # verhindert sudo schon beim "Gathering Facts"
 
   vars:
-    # Default-Werte für Logging
     update_type: "Unbekannt"
     update_status: "n/a"
     reboot_required: "nein"
@@ -35,7 +34,7 @@
         - ansible_pkg_mgr == "apt"
 
     # --------------------------
-    # Linux: DNF5 (Fedora 42 / RHEL 10+)
+    # Linux: DNF5
     # --------------------------
     - name: Update all packages via DNF5
       ansible.builtin.shell: dnf -y upgrade
@@ -52,14 +51,14 @@
     - name: Set log vars for DNF5
       ansible.builtin.set_fact:
         update_type: "DNF5"
-        update_status: "{{ 'changed' if dnf5_result.rc == 0 and dnf5_result.changed else 'ok' }}"
+        update_status: "{{ 'changed' if dnf5_result.changed else 'ok' }}"
       when:
         - ansible_os_family != "Windows"
         - ansible_pkg_mgr is defined
         - ansible_pkg_mgr == "dnf5"
 
     # --------------------------
-    # Linux: Zypper
+    # Linux: Zypper (braucht community.general)
     # --------------------------
     - name: Update Zypper-based Linux systems
       community.general.zypper:
@@ -82,10 +81,10 @@
         - ansible_pkg_mgr == "zypper"
 
     # --------------------------
-    # Windows Updates
+    # Windows Updates (ohne FQCN)
     # --------------------------
     - name: Check for available updates (Windows)
-      ansible.windows.win_updates:
+      win_updates:
         category_names:
           - SecurityUpdates
           - CriticalUpdates
@@ -95,7 +94,7 @@
       when: ansible_os_family == "Windows"
 
     - name: Install Windows updates (Windows)
-      ansible.windows.win_updates:
+      win_updates:
         category_names:
           - SecurityUpdates
           - CriticalUpdates
@@ -155,23 +154,23 @@
       when: ansible_os_family != "Windows"
 
     # --------------------------
-    # Local log file handling (Windows)
+    # Local log file handling (Windows) (ohne FQCN)
     # --------------------------
     - name: Ensure local CSV exists (Windows)
-      ansible.windows.win_file:
+      win_file:
         path: C:\ansible_updates.csv
         state: touch
       when: ansible_os_family == "Windows"
 
     - name: Add CSV header if file is empty (Windows)
-      ansible.windows.win_shell: |
+      win_shell: |
         if (!(Test-Path C:\ansible_updates.csv) -or (Get-Content C:\ansible_updates.csv).Length -eq 0) {
           "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" | Out-File -FilePath C:\ansible_updates.csv -Encoding utf8
         }
       when: ansible_os_family == "Windows"
 
     - name: Append update log to local CSV (Windows)
-      ansible.windows.win_lineinfile:
+      win_lineinfile:
         path: C:\ansible_updates.csv
         line: "{{ update_log_line | regex_replace('\\s*,\\s*', ',') }}"
         create: yes
