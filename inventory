@@ -29,7 +29,7 @@ ansible_become_method=sudo
 ansible_user=Administrator
 ansible_password=g%Hr113Lmm
 ansible_connection=winrm
-ansible_winrm_transport=basic
+ansible_winrm_transport=ntlm
 ansible_port=5985
 ansible_winrm_server_cert_validation=ignore
 
