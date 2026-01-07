@@ -1,9 +1,9 @@
-[k3s_master]
-k3s-master ansible_host=192.168.56.113 ansible_user=ansibleserver
+#[k3s_master]
+#k3s-master ansible_host=192.168.56.113 ansible_user=ansibleserver
 
-[k3s_nodes]
-k3s-node1 ansible_host=192.168.10.112 ansible_user=ansiblefedora
-k3s-node2 ansible_host=192.168.10.116 ansible_user=ansibleubuntu
+#[k3s_nodes]
+#k3s-node1 ansible_host=192.168.10.112 ansible_user=ansiblefedora
+#k3s-node2 ansible_host=192.168.10.116 ansible_user=ansibleubuntu
 
 [linux]
 192.168.56.112 ansible_user=ansiblefedora
@@ -14,13 +14,13 @@ k3s-node2 ansible_host=192.168.10.116 ansible_user=ansibleubuntu
 ansible_become=true
 ansible_become_method=sudo
 
-[k3s_master:vars]
-ansible_become=true
-ansible_become_method=sudo
+#[k3s_master:vars]
+#ansible_become=true
+#ansible_become_method=sudo
 
-[k3s_nodes:vars]
-ansible_become=true
-ansible_become_method=sudo
+#[k3s_nodes:vars]
+#ansible_become=true
+#ansible_become_method=sudo
 
 [windows]
 192.168.56.115
