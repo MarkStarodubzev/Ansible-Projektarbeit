@@ -2,6 +2,7 @@
 - name: Update Linux and Windows systems
   hosts: all
   gather_facts: yes
+  become: false  # wichtig: verhindert sudo bei "Gathering Facts"
 
   vars:
     # Default-Werte für Logging
@@ -25,7 +26,7 @@
       become: yes
 
     - name: Set log vars for APT
-      set_fact:
+      ansible.builtin.set_fact:
         update_type: "APT"
         update_status: "{{ 'changed' if apt_result.changed else 'ok' }}"
       when:
@@ -34,11 +35,14 @@
         - ansible_pkg_mgr == "apt"
 
     # --------------------------
-    # Linux: DNF5 via shell (Fedora 42 / RHEL 10+)
+    # Linux: DNF5 (Fedora 42 / RHEL 10+)
     # --------------------------
     - name: Update all packages via DNF5
       ansible.builtin.shell: dnf -y upgrade
       register: dnf5_result
+      changed_when: >
+        (dnf5_result.stdout is defined and ('Nothing to do.' not in dnf5_result.stdout))
+        or (dnf5_result.stderr is defined and ('Nothing to do.' not in dnf5_result.stderr))
       when:
         - ansible_os_family != "Windows"
         - ansible_pkg_mgr is defined
@@ -46,9 +50,9 @@
       become: yes
 
     - name: Set log vars for DNF5
-      set_fact:
+      ansible.builtin.set_fact:
         update_type: "DNF5"
-        update_status: "{{ 'changed' if dnf5_result.rc == 0 else 'failed' }}"
+        update_status: "{{ 'changed' if dnf5_result.rc == 0 and dnf5_result.changed else 'ok' }}"
       when:
         - ansible_os_family != "Windows"
         - ansible_pkg_mgr is defined
@@ -69,7 +73,7 @@
       become: yes
 
     - name: Set log vars for Zypper
-      set_fact:
+      ansible.builtin.set_fact:
         update_type: "Zypper"
         update_status: "{{ 'changed' if zypper_result.changed else 'ok' }}"
       when:
@@ -80,29 +84,30 @@
     # --------------------------
     # Windows Updates
     # --------------------------
-    - name: Check for available updates
-      win_updates:
+    - name: Check for available updates (Windows)
+      ansible.windows.win_updates:
         category_names:
           - SecurityUpdates
           - CriticalUpdates
           - UpdateRollups
         state: searched
-      register: win_updates_result
+      register: win_updates_search
       when: ansible_os_family == "Windows"
-    
-    - name: Install Windows updates
-      win_updates:
+
+    - name: Install Windows updates (Windows)
+      ansible.windows.win_updates:
         category_names:
           - SecurityUpdates
           - CriticalUpdates
           - UpdateRollups
+        state: installed
       register: win_update_result
       when: ansible_os_family == "Windows"
 
     - name: Set log vars for Windows
-      set_fact:
+      ansible.builtin.set_fact:
         update_type: "WindowsUpdate"
-        update_status: "{{ 'changed' if (win_update_result.updates | length > 0) else 'ok' }}"
+        update_status: "{{ 'changed' if win_update_result.changed else 'ok' }}"
         reboot_required: "{{ 'ja' if win_update_result.reboot_required else 'nein' }}"
       when: ansible_os_family == "Windows"
 
@@ -110,8 +115,14 @@
     # Build log line
     # --------------------------
     - name: Build update log line
-      set_fact:
-        update_log_line: "{{ ansible_date_time.date }} {{ ansible_date_time.time }},{{ inventory_hostname }},{{ ansible_distribution }} {{ ansible_distribution_version }},{{ update_type }},{{ update_status }},{{ reboot_required }}"
+      ansible.builtin.set_fact:
+        update_log_line: >-
+          {{ ansible_date_time.date }} {{ ansible_date_time.time }},
+          {{ inventory_hostname }},
+          {{ ansible_distribution | default('n/a') }} {{ ansible_distribution_version | default('n/a') }},
+          {{ update_type }},
+          {{ update_status }},
+          {{ reboot_required }}
 
     # --------------------------
     # Local log file handling (Linux)
@@ -137,7 +148,7 @@
     - name: Append update log to local CSV (Linux)
       ansible.builtin.lineinfile:
         path: /var/log/ansible_updates.csv
-        line: "{{ update_log_line }}"
+        line: "{{ update_log_line | regex_replace('\\s*,\\s*', ',') }}"
         create: yes
         insertafter: EOF
       become: yes
@@ -147,22 +158,22 @@
     # Local log file handling (Windows)
     # --------------------------
     - name: Ensure local CSV exists (Windows)
-      win_file:
+      ansible.windows.win_file:
         path: C:\ansible_updates.csv
         state: touch
       when: ansible_os_family == "Windows"
 
     - name: Add CSV header if file is empty (Windows)
-      win_shell: |
+      ansible.windows.win_shell: |
         if (!(Test-Path C:\ansible_updates.csv) -or (Get-Content C:\ansible_updates.csv).Length -eq 0) {
           "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" | Out-File -FilePath C:\ansible_updates.csv -Encoding utf8
         }
       when: ansible_os_family == "Windows"
 
     - name: Append update log to local CSV (Windows)
-      win_lineinfile:
+      ansible.windows.win_lineinfile:
         path: C:\ansible_updates.csv
-        line: "{{ update_log_line }}"
+        line: "{{ update_log_line | regex_replace('\\s*,\\s*', ',') }}"
         create: yes
         insertafter: EOF
       when: ansible_os_family == "Windows"
