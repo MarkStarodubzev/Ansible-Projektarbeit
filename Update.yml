@@ -2,85 +2,179 @@
 - name: Update Linux and Windows systems
   hosts: all
   gather_facts: yes
+  become: false  # verhindert sudo schon beim "Gathering Facts"
+
   vars:
-    windows_reboot: yes
+    update_type: "Unbekannt"
+    update_status: "n/a"
+    reboot_required: "nein"
 
   tasks:
     # --------------------------
-    # Debian/Ubuntu
+    # Linux: APT
     # --------------------------
     - name: Update APT-based Linux systems
-      apt:
-        update_cache: yes
+      ansible.builtin.apt:
         upgrade: dist
-      when: ansible_os_family == "Debian"
-      become: yes
+        update_cache: yes
+        lock_timeout: 600
       register: apt_result
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr == "apt"
+      become: yes
 
-    - name: Show APT update result
-      debug:
-        var: apt_result
-      when: ansible_os_family == "Debian"
+    - name: Set log vars for APT
+      ansible.builtin.set_fact:
+        update_type: "APT"
+        update_status: "{{ 'changed' if apt_result.changed else 'ok' }}"
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr == "apt"
 
     # --------------------------
-    # RHEL/CentOS (yum)
+    # Linux: DNF (Fedora / RHEL / Rocky / Alma)
+    # (arbeitet über Modul statt shell)
     # --------------------------
-    - name: Update RHEL/CentOS systems with yum
-      yum:
+    - name: Update all packages via DNF module
+      ansible.builtin.dnf:
         name: "*"
         state: latest
-      when: ansible_distribution in ["RedHat", "CentOS", "Rocky", "AlmaLinux"] and ansible_distribution_major_version | int < 9
+        update_cache: yes
+      register: dnf_result
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr in ["dnf", "dnf5"]
       become: yes
-      register: yum_result
 
-    - name: Show YUM update result
-      debug:
-        var: yum_result
-      when: ansible_distribution in ["RedHat", "CentOS", "Rocky", "AlmaLinux"] and ansible_distribution_major_version | int < 9
-
-    # --------------------------
-    # Fedora 42+ (dnf via shell)
-    # --------------------------
-    - name: Update Fedora 42+ systems using shell
-      ansible.builtin.shell: dnf -y upgrade
-      when: ansible_distribution == "Fedora" and ansible_distribution_major_version | int >= 42
-      become: yes
-      register: dnf_shell_result
-
-    - name: Show DNF shell result
-      debug:
-        var: dnf_shell_result
-      when: ansible_distribution == "Fedora" and ansible_distribution_major_version | int >= 42
+    - name: Set log vars for DNF
+      ansible.builtin.set_fact:
+        update_type: "DNF"
+        update_status: "{{ 'changed' if dnf_result.changed else 'ok' }}"
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr in ["dnf", "dnf5"]
 
     # --------------------------
-    # openSUSE/SLE
+    # Linux: Zypper (braucht community.general)
     # --------------------------
     - name: Update Zypper-based Linux systems
-      zypper:
+      community.general.zypper:
         name: "*"
         state: latest
-      when: ansible_os_family == "Suse"
-      become: yes
       register: zypper_result
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr == "zypper"
+      become: yes
 
-    - name: Show Zypper update result
-      debug:
-        var: zypper_result
-      when: ansible_os_family == "Suse"
+    - name: Set log vars for Zypper
+      ansible.builtin.set_fact:
+        update_type: "Zypper"
+        update_status: "{{ 'changed' if zypper_result.changed else 'ok' }}"
+      when:
+        - ansible_os_family != "Windows"
+        - ansible_pkg_mgr is defined
+        - ansible_pkg_mgr == "zypper"
 
     # --------------------------
-    # Windows
+    # Windows Updates
     # --------------------------
-    - name: Install Windows updates
+    - name: Check for available updates (Windows)
       win_updates:
         category_names:
           - SecurityUpdates
           - CriticalUpdates
-        reboot: "{{ windows_reboot }}"
+          - UpdateRollups
+        state: searched
+      register: win_updates_search
       when: ansible_os_family == "Windows"
-      register: win_result
 
-    - name: Show Windows update result
-      debug:
-        var: win_result
+    - name: Install Windows updates (Windows)
+      win_updates:
+        category_names:
+          - SecurityUpdates
+          - CriticalUpdates
+          - UpdateRollups
+        state: installed
+      register: win_update_result
+      when: ansible_os_family == "Windows"
+
+    - name: Set log vars for Windows
+      ansible.builtin.set_fact:
+        update_type: "WindowsUpdate"
+        update_status: "{{ 'changed' if win_update_result.changed else 'ok' }}"
+        reboot_required: "{{ 'ja' if win_update_result.reboot_required else 'nein' }}"
+      when: ansible_os_family == "Windows"
+
+    # --------------------------
+    # Build log line
+    # --------------------------
+    - name: Build update log line
+      ansible.builtin.set_fact:
+        update_log_line: >-
+          {{ ansible_date_time.date }} {{ ansible_date_time.time }},
+          {{ inventory_hostname }},
+          {{ ansible_distribution | default('n/a') }} {{ ansible_distribution_version | default('n/a') }},
+          {{ update_type }},
+          {{ update_status }},
+          {{ reboot_required }}
+
+    # --------------------------
+    # Local log file handling (Linux)
+    # --------------------------
+    - name: Ensure local CSV exists (Linux)
+      ansible.builtin.file:
+        path: /var/log/ansible_updates.csv
+        state: touch
+        mode: '0644'
+      become: yes
+      when: ansible_os_family != "Windows"
+
+    - name: Add CSV header if file is empty (Linux)
+      ansible.builtin.shell: |
+        if [ ! -s /var/log/ansible_updates.csv ]; then
+          echo "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" > /var/log/ansible_updates.csv
+        fi
+      args:
+        executable: /bin/bash
+      become: yes
+      when: ansible_os_family != "Windows"
+
+    - name: Append update log to local CSV (Linux)
+      ansible.builtin.lineinfile:
+        path: /var/log/ansible_updates.csv
+        line: "{{ update_log_line | regex_replace('\\s*,\\s*', ',') }}"
+        create: yes
+        insertafter: EOF
+      become: yes
+      when: ansible_os_family != "Windows"
+
+    # --------------------------
+    # Local log file handling (Windows)
+    # --------------------------
+    - name: Ensure local CSV exists (Windows)
+      win_file:
+        path: C:\ansible_updates.csv
+        state: touch
+      when: ansible_os_family == "Windows"
+
+    - name: Add CSV header if file is empty (Windows)
+      win_shell: |
+        if (!(Test-Path C:\ansible_updates.csv) -or (Get-Content C:\ansible_updates.csv).Length -eq 0) {
+          "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" | Out-File -FilePath C:\ansible_updates.csv -Encoding utf8
+        }
+      when: ansible_os_family == "Windows"
+
+    - name: Append update log to local CSV (Windows)
+      win_lineinfile:
+        path: C:\ansible_updates.csv
+        line: "{{ update_log_line | regex_replace('\\s*,\\s*', ',') }}"
+        create: yes
+        insertafter: EOF
       when: ansible_os_family == "Windows"
