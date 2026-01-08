@@ -130,7 +130,7 @@
     # --------------------------
     - name: Ensure local CSV exists (Linux)
       ansible.builtin.file:
-        path: /var/log/ansible_updates.csv
+        path: /tmp/ansible_log.csv
         state: touch
         mode: '0644'
       become: yes
@@ -139,7 +139,7 @@
     - name: Add CSV header if file is empty (Linux)
       ansible.builtin.shell: |
         if [ ! -s /var/log/ansible_updates.csv ]; then
-          echo "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" > /var/log/ansible_updates.csv
+          echo "Datum,Uhrzeit,Host,OS,Update-Typ,Status,Reboot-Erforderlich" > /tmp/ansible_log.csv
         fi
       args:
         executable: /bin/bash
@@ -148,7 +148,7 @@
 
     - name: Append update log to local CSV (Linux)
       ansible.builtin.lineinfile:
-        path: /var/log/ansible_updates.csv
+        path: /tmp/ansible_log.csv
         line: "{{ update_log_line | regex_replace('\\s*,\\s*', ',') }}"
         create: yes
         insertafter: EOF
